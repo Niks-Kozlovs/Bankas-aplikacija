@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.AnchorPane?>
+
+<AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="800.0" xmlns="http://javafx.com/javafx/10.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="application.MainFormController">
+	<children>
+      <Button fx:id="btnAddMoney" layoutX="245.0" layoutY="112.0" mnemonicParsing="false" onAction="#addMoneyClicked" prefHeight="25.0" prefWidth="85.0" text="Add" />
+		<Label fx:id="lblName" layoutX="14.0" layoutY="14.0" prefHeight="17.0" prefWidth="149.0" />
+		<TableView fx:id="listAccounts" layoutX="290.0" layoutY="10.0" onMouseClicked="#selectionChanged" prefHeight="380.0" prefWidth="450.0" AnchorPane.rightAnchor="10.0" AnchorPane.topAnchor="10.0">
+			<columns>
+			</columns>
+		</TableView>
+		<ComboBox fx:id="filterBox" layoutX="170.0" layoutY="10.0" onAction="#updateList" prefHeight="25.0" prefWidth="159.0" promptText="Select account types" visibleRowCount="4" />
+      <TextField fx:id="txtTransferNr" layoutX="14.0" layoutY="73.0" prefHeight="25.0" prefWidth="220.0" promptText="Account number to transfer to" />
+      <Button fx:id="btnTransfer" layoutX="245.0" layoutY="73.0" mnemonicParsing="false" onAction="#transferClicked" prefHeight="25.0" prefWidth="85.0" text="Transfer" />
+      <TextField fx:id="txtAddMoney" layoutX="14.0" layoutY="112.0" prefHeight="25.0" prefWidth="220.0" promptText="How much money" />
+      <Label layoutX="13.0" layoutY="185.0" prefHeight="25.0" prefWidth="314.0" text="Stats:" />
+      <Label fx:id="lblMoney" layoutX="13.0" layoutY="210.0" prefHeight="25.0" prefWidth="314.0" text="Sum of money for ? is ? ?" />
+      <Label fx:id="lblCount" layoutX="13.0" layoutY="235.0" prefHeight="25.0" prefWidth="314.0" text="There are count accounts" />
+      <Button fx:id="btnRemoveMoney" layoutX="245.0" layoutY="145.0" mnemonicParsing="false" onAction="#removeMoneyClicked" prefHeight="25.0" prefWidth="85.0" text="Remove" />
+      <Label fx:id="lblAccount" layoutX="14.0" layoutY="48.0" />
+      <Label fx:id="lblStatus" layoutY="369.0" prefHeight="17.0" prefWidth="335.0" />
+	</children>
+</AnchorPane>
