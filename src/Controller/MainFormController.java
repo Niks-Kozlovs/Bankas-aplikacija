@@ -1,19 +1,25 @@
 package Controller;
 
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.net.URL;
 import java.util.Currency;
 import java.util.ResourceBundle;
 
-import Model.Database;
 import Model.User;
 import Model.Accounts.AccountTemplate;
 import Model.Accounts.Konti;
+import Services.Database;
+import Services.UserService;
+import Util.InputValidator;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
@@ -21,6 +27,7 @@ import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.stage.Stage;
 
 public class MainFormController implements Initializable {
 	User user;
@@ -52,31 +59,30 @@ public class MainFormController implements Initializable {
 
 	@FXML
 	private Button btnTransfer;
-
 	@FXML
 	private Button btnAddMoney;
 	@FXML
 	private Button btnRemoveMoney;
-	
+	@FXML
+	private Button btnOpenAdmin;
+
 	private static final String NO_TRANSFER = "Could not transfer money!";
 
-	// Constructor
-	public void setUp(User user, Database db) {
-		this.db = db;
-		this.user = user;
-		lblAccount.setText("Selected account: none");
+	@Override
+	public void initialize(URL arg0, ResourceBundle arg1) {
+		this.db = Database.getInstance();
+		this.user = UserService.getInstance().getCurrentUser();
 
+		if (!this.user.getIsAdmin()) {
+			btnOpenAdmin.setVisible(false);
+		}
+
+		lblAccount.setText("Selected account: none");
 		lblName.setText("Welcome " + user.getName() + "! (" + user.getUserID() + ")");
 		populateAccountsList(user.getAccounts());
-		// Populate combobox
 		filterBox.getItems().addAll("Algas konts", "Noguldijuma konts", "Kredita konts", "All");
-		// Gets the first account
-		selectedAccount = getAccounts(user.getAccounts()).get(0);
-		listAccounts.getSelectionModel().selectFirst();
-		
 	}
 
-	@SuppressWarnings("unchecked")
 	private void populateAccountsList(Konti accounts) {
 		TableColumn<AccountTemplate, Integer> accountNumber = new TableColumn<>("Account number");
 		accountNumber.setMinWidth(100);
@@ -222,7 +228,7 @@ public class MainFormController implements Initializable {
 		String account = txtTransferNr.getText();
 		String moneyStr = txtAddMoney.getText();
 		
-		if (!(InputControl.checkInteger(account) && InputControl.checkFloat(moneyStr))) {
+		if (!(InputValidator.checkInteger(account) && InputValidator.checkFloat(moneyStr))) {
 			lblStatus.setText("Invalid account number or money!");
 			return;
 		}
@@ -251,7 +257,7 @@ public class MainFormController implements Initializable {
 	@FXML
 	public void addMoneyClicked() {
 		String moneyStr = txtAddMoney.getText();
-		if (!InputControl.checkFloat(moneyStr)) {
+		if (!InputValidator.checkFloat(moneyStr)) {
 			lblStatus.setText("Invalid money entered!");
 			return;
 		}
@@ -278,7 +284,7 @@ public class MainFormController implements Initializable {
 	@FXML
 	public void removeMoneyClicked() {
 		String moneyStr = txtAddMoney.getText();
-		if (!InputControl.checkFloat(moneyStr)) {
+		if (!InputValidator.checkFloat(moneyStr)) {
 			lblStatus.setText("Invalid money entered!");
 			return;
 		}
@@ -300,10 +306,24 @@ public class MainFormController implements Initializable {
 		updateStats();
 	}
 
-	@Override
-	public void initialize(URL arg0, ResourceBundle arg1) {
+	@FXML
+	public void openAdminPanel() {
+		try {
+			FXMLLoader loader = new FXMLLoader(getClass().getResource("/View/AdminPage.fxml"));
+			Parent root = (Parent) loader.load();
+
+			AdminPageController controller = loader.getController();
+			controller.setUp(user, db);
+			Stage stage = new Stage();
+			stage.setResizable(false);
+
+			stage.setScene(new Scene(root));
+			stage.show();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
-	
+
 	//Closes all open windows for program and shuts it down
 	public void shutdown() {
 		Platform.exit();

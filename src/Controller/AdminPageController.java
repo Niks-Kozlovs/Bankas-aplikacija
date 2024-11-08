@@ -5,10 +5,11 @@ import java.net.URL;
 import java.util.Currency;
 import java.util.ResourceBundle;
 
-import Model.Database;
 import Model.User;
 import Model.Accounts.AccountTemplate;
 import Model.Accounts.Konti;
+import Services.Database;
+import Util.InputValidator;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
@@ -115,7 +116,7 @@ public class AdminPageController implements Initializable {
 	// but since there isnt a lot of admins it wont take that much
 	public void setTextFields() {
 		// if it is invalid then clear the fields
-		if (!InputControl.checkInteger(txtID.getText()) || txtID.getText().equals("")) {
+		if (!InputValidator.checkInteger(txtID.getText()) || txtID.getText().equals("")) {
 			clearFields();
 			disableKontsButtons(true);
 			return;
@@ -151,12 +152,12 @@ public class AdminPageController implements Initializable {
 		String email = txtEmail.getText();
 		String password = txtPass.getText();
 
-		if (!InputControl.isValidNameSurname(name) || !InputControl.isValidNameSurname(surname) || !InputControl.checkEmail(email)) {
+		if (!InputValidator.isValidNameSurname(name) || !InputValidator.isValidNameSurname(surname) || !InputValidator.checkEmail(email)) {
 			lblStatus.setText("Please check if all the fields are entered correctly!");
 			return;
 		} else {
-			name = InputControl.capitalizeFirstLetter(name);
-			surname = InputControl.capitalizeFirstLetter(surname);
+			name = InputValidator.capitalizeFirstLetter(name);
+			surname = InputValidator.capitalizeFirstLetter(surname);
 
 			if (db.addNewUser(name, surname, email, password) != null) {
 				Database.log(Integer.toString(user.getUserID()), "added account");
@@ -183,12 +184,12 @@ public class AdminPageController implements Initializable {
 		String name = txtName.getText();
 		String surname = txtSurname.getText();
 		String email = txtEmail.getText();
-		if (!(InputControl.checkInteger(ID) || InputControl.isValidNameSurname(name) || InputControl.isValidNameSurname(surname) || InputControl.checkEmail(email))) {
+		if (!(InputValidator.checkInteger(ID) || InputValidator.isValidNameSurname(name) || InputValidator.isValidNameSurname(surname) || InputValidator.checkEmail(email))) {
 			lblStatus.setText("Invalid values entered please check fields!");
 			return;
 		}
-		name = InputControl.capitalizeFirstLetter(name);
-		surname = InputControl.capitalizeFirstLetter(surname);
+		name = InputValidator.capitalizeFirstLetter(name);
+		surname = InputValidator.capitalizeFirstLetter(surname);
 		
 		db.modifyUser(Integer.parseInt(ID), name, surname, email);
 		lblStatus.setText("Modified user!");
@@ -197,7 +198,7 @@ public class AdminPageController implements Initializable {
 
 	public void deleteUser() {
 		String id = txtID.getText();
-		if (!InputControl.checkInteger(id)) {
+		if (!InputValidator.checkInteger(id)) {
 			lblStatus.setText("Check if id is correct!");
 			return;
 		}

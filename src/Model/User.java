@@ -30,14 +30,16 @@ public class User {
 		return konti;
 	}
 
-
 	public User() {
 
 	}
 
-	public User (int userID,String email, String name, String surname) {
-		setAll(userID,email,name,surname);
+	public User(int userID, String email, String name, String surname, boolean isAdmin) {
+		setAll(userID, email, name, surname, isAdmin);
+	}
 
+	public User(int userID, String email, String name, String surname) {
+		this(userID, email, name, surname, false);
 	}
 
 	public void setAll(int userID,String email, String name, String surname) {
@@ -46,6 +48,7 @@ public class User {
 		setName(name);
 		setSurname(surname);
 	}
+
 	public void setAll(int userID, String email, String name, String surname, boolean isAdmin) {
 		setAll(userID,email,name,surname);
 		setIsAdmin(isAdmin);

@@ -7,7 +7,7 @@
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.layout.AnchorPane?>
 
-<AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="800.0" xmlns="http://javafx.com/javafx/10.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="application.MainFormController">
+<AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="800.0" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="Controller.MainFormController">
 	<children>
       <Button fx:id="btnAddMoney" layoutX="245.0" layoutY="112.0" mnemonicParsing="false" onAction="#addMoneyClicked" prefHeight="25.0" prefWidth="85.0" text="Add" />
 		<Label fx:id="lblName" layoutX="14.0" layoutY="14.0" prefHeight="17.0" prefWidth="149.0" />
@@ -25,5 +25,6 @@
       <Button fx:id="btnRemoveMoney" layoutX="245.0" layoutY="145.0" mnemonicParsing="false" onAction="#removeMoneyClicked" prefHeight="25.0" prefWidth="85.0" text="Remove" />
       <Label fx:id="lblAccount" layoutX="14.0" layoutY="48.0" />
       <Label fx:id="lblStatus" layoutY="369.0" prefHeight="17.0" prefWidth="335.0" />
+      <Button fx:id="btnOpenAdmin" layoutX="14.0" layoutY="357.0" mnemonicParsing="false" onAction="#openAdminPanel" text="Open admin panel" />
 	</children>
 </AnchorPane>

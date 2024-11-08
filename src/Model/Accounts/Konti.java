@@ -4,9 +4,9 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 
-import Model.Database;
+import Services.Database;
 
-
+//TODO: Fix this class to be more dynamic
 public class Konti {
 	ArrayList<KreditaKonts> kd = new ArrayList<KreditaKonts>();
 	ArrayList<AlgasKonts> ak = new ArrayList<AlgasKonts>();
@@ -32,6 +32,7 @@ public class Konti {
 	}
 
 	//Not the best ieda using result set here.
+	//TODO: Refactor this
 	public void addAccounts(ResultSet rs) {
 		AccountTemplate acc;
 		try {

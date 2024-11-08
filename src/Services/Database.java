@@ -1,4 +1,4 @@
-package Model;
+package Services;
 
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
@@ -8,14 +8,17 @@ import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
+import javax.naming.AuthenticationException;
+
+import Model.User;
 import Model.Accounts.AccountTemplate;
 import Model.Accounts.AlgasKonts;
 import Model.Accounts.KreditaKonts;
 import Model.Accounts.NoguldijumaKonts;
 import at.favre.lib.crypto.bcrypt.BCrypt;
 
-//TODO: Figure out where to put you
 public class Database {
+	private static Database instance;
 	private Connection myConn;
 
 	// TODO: Move to env file
@@ -23,58 +26,51 @@ public class Database {
 	private static final String USERNAME = "test";
 	private static final String PASS = "1234";
 
-	public Database() {
+	private Database() {
 		connect();
-		createStatement();
 		createUserOnFirstLaunch();
-		}
+	}
 
-		private void createUserOnFirstLaunch() {
-			//Check the user count. If it is 0 then add a default user
-			try {
-				java.sql.PreparedStatement stmt = myConn.prepareStatement("SELECT COUNT(*) as count FROM users");
-				ResultSet rs = stmt.executeQuery();
-				rs.next();
-				if (rs.getInt("count") != 0) {
-					return;
+	public static Database getInstance() {
+		if (instance == null) {
+			synchronized (Database.class) {
+				if (instance == null) {
+					instance = new Database();
 				}
-
-				User user = addNewUser("Admin", "Admin", "admin@admin.com", "admin");
-				java.sql.PreparedStatement stmt2 = myConn.prepareStatement("INSERT INTO `admins`(`UserID`, `AdminPass`) VALUES (?,?);");
-				stmt2.setInt(1, user.getUserID());
-				stmt2.setString(2, BCrypt.withDefaults().hashToString(12, "admin".toCharArray()));
-				stmt2.executeUpdate();
-			} catch (SQLException e) {
-				e.printStackTrace();
-				showError();
 			}
 		}
+		return instance;
+	}
 
-		private void connect() {
+	private void connect() {
 		try {
 			myConn = DriverManager.getConnection(URL, USERNAME, PASS);
+			myConn.createStatement();
 		} catch (SQLException exc) {
 			exc.printStackTrace();
 			showError();
 		}
 	}
 
-	private void createStatement() {
+	private void createUserOnFirstLaunch() {
+		//Check the user count. If it is 0 then add a default user
 		try {
-			myConn.createStatement();
+			java.sql.PreparedStatement stmt = myConn.prepareStatement("SELECT COUNT(*) as count FROM users");
+			ResultSet rs = stmt.executeQuery();
+			rs.next();
+			if (rs.getInt("count") != 0) {
+				return;
+			}
+
+			User user = addNewUser("Admin", "Admin", "admin@admin.com", "admin");
+			java.sql.PreparedStatement stmt2 = myConn.prepareStatement("INSERT INTO `admins`(`UserID`, `AdminPass`) VALUES (?,?);");
+			stmt2.setInt(1, user.getUserID());
+			stmt2.setString(2, BCrypt.withDefaults().hashToString(12, "admin".toCharArray()));
+			stmt2.executeUpdate();
 		} catch (SQLException e) {
 			e.printStackTrace();
 			showError();
 		}
-	}
-
-	private static void showError() {
-		Alert alert = new Alert(AlertType.ERROR);
-		alert.setTitle("Error");
-		alert.setHeaderText("Database failed to connect");
-		alert.setContentText("Check your internet connection or make sure the server is turned on!");
-
-		alert.showAndWait();
 	}
 
 	public User addNewUser(String name, String surname, String email, String password) {
@@ -191,7 +187,7 @@ public class Database {
 		}
 	}
 
-	public boolean login(String email, String password, User user) {
+	public User login(String email, String password) throws AuthenticationException {
 		ResultSet rs = null;
 		try {
 			java.sql.PreparedStatement stmt = myConn.prepareStatement("SELECT * FROM `users` WHERE Email = ?");
@@ -199,37 +195,31 @@ public class Database {
 			rs = stmt.executeQuery();
 
 			if (!rs.next()) {
-					return false;
-				}
-	
-				String hashedPass = rs.getString("Password");
-				boolean isPasswordCorrect = BCrypt.verifyer().verify(password.toCharArray(), hashedPass).verified;
-	
-				if (!isPasswordCorrect) {
-					return false;
-				}
-	
-				boolean isAdmin = isAdmin(rs.getInt("ID"));
-				user.setAll(
-					rs.getInt("ID"),
-					rs.getString("email"),
-					rs.getString("name"),
-					rs.getString("surname"),
-					isAdmin
-				);
-	
-				if (!isAdmin) {
-					log(user.getUserID() + "", "Logged in");
-				} else {
-					log(user.getUserID() + "", "Logged in as admin");
-				}
+				throw new AuthenticationException("User not found");
+			}
 
-				return true;
+			String hashedPass = rs.getString("Password");
+			boolean isPasswordCorrect = BCrypt.verifyer().verify(password.toCharArray(), hashedPass).verified;
+
+			if (!isPasswordCorrect) {
+				throw new AuthenticationException("Wrong password");
+			}
+
+			boolean isAdmin = isAdmin(rs.getInt("ID"));
+			User user = new User(rs.getInt("ID"), rs.getString("Email"), rs.getString("Name"), rs.getString("Surname"), isAdmin);
+
+			if (!user.getIsAdmin()) {
+				log(user.getUserID() + "", "Logged in");
+			} else {
+				log(user.getUserID() + "", "Logged in as admin");
+			}
+
+			return user;
 			} catch (SQLException e) {
 				showError();
 				e.printStackTrace();
 			}
-			return false;
+			return null;
 		}
 
 
@@ -419,20 +409,6 @@ public class Database {
 
 	}
 
-	// For using addmoney functions which isnt in the abstract class
-	public static AccountTemplate createAccountBasedOnType(int type) {
-		switch (type) {
-			case AccountTemplate.ALGAS_KONTS:
-				return new AlgasKonts();
-			case AccountTemplate.KREDITA_KONTS:
-				return new KreditaKonts();
-			case AccountTemplate.NOGULDIJUMA_KONTS:
-				return new NoguldijumaKonts();
-			default:
-				return null;
-		}
-	}
-
 	public boolean loginAdmin(int userID, String password) {
 		ResultSet rs = null;
 		try {
@@ -457,5 +433,28 @@ public class Database {
 
 		return false;
 
+	}
+
+	// For using addmoney functions which isnt in the abstract class
+	public static AccountTemplate createAccountBasedOnType(int type) {
+		switch (type) {
+			case AccountTemplate.ALGAS_KONTS:
+				return new AlgasKonts();
+			case AccountTemplate.KREDITA_KONTS:
+				return new KreditaKonts();
+			case AccountTemplate.NOGULDIJUMA_KONTS:
+				return new NoguldijumaKonts();
+			default:
+				return null;
+		}
+	}
+
+	private static void showError() {
+		Alert alert = new Alert(AlertType.ERROR);
+		alert.setTitle("Error");
+		alert.setHeaderText("Database failed to connect");
+		alert.setContentText("Check your internet connection or make sure the server is turned on!");
+
+		alert.showAndWait();
 	}
 }

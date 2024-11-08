@@ -1,17 +1,16 @@
-package Controller;
+package Util;
 
-//TODO: Refactor code so this can be deleted
+public class InputValidator {
 
-public class InputControl {
-	
 	private static final char[] specialCharactersLocalPart = { '!', '#', '$', '%', '&', '*', '+', '-', '/', '=', '?',
 			'^', '`', '{', '|', '}', '~' };
 
 	public static String capitalizeFirstLetter(String text) {
 
-		return  text.substring(0, 1).toUpperCase() + text.substring(1, text.length()).toLowerCase();
+		return text.substring(0, 1).toUpperCase() + text.substring(1, text.length()).toLowerCase();
 	}
-	
+
+	//Realisticly I would ignore the checks and let the user do whatever. In a real bank it would be confirmed by a human
 	public static boolean isValidNameSurname(String text) {
 		if (text.equals("")) {
 			return false;
@@ -25,11 +24,8 @@ public class InputControl {
 		return true;
 	}
 
+	// Realisticly I would ignore the checks and just send a confirmation email
 	public static boolean checkEmail(String email) {
-		// TODO polish until https://en.wikipedia.org/wiki/Email_address filters all
-		// emails correctly
-		// will ignore the quotation mark thing for now
-		// very edge case scenario
 		if (email.equals("")) {
 			return false;
 		}
@@ -113,29 +109,24 @@ public class InputControl {
 			return false;
 		}
 	}
-	
+
 	public static boolean checkInteger(String int1) {
 		try {
 			Integer.parseInt(int1);
 			return true;
-			
+
 		} catch (NumberFormatException e) {
 			return false;
 		}
 	}
-	
+
 	public static boolean checkFloat(String float1) {
-        try
-        { 
-            Float.parseFloat(float1); 
-            return true;
-        }  
-        catch (NumberFormatException e) 
-        { 
-            return false;
-        } 
+		try {
+			Float.parseFloat(float1);
+			return true;
+		} catch (NumberFormatException e) {
+			return false;
+		}
 	}
-	
-	
 
 }
