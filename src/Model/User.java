@@ -1,34 +1,11 @@
 package Model;
 
-import Model.Accounts.AccountTemplate;
-import Model.Accounts.Konti;
-import javafx.collections.ObservableList;
-
 public class User {
 	int userID = -1; //Not set
 	String email = null;
 	String name = null;
 	String surname = null;
 	boolean isAdmin = false;
-
-	private Konti konti = new Konti();
-
-	public void setAccounts(Konti konts) {
-		this.konti = konts;
-	}
-
-	public void setAccounts(ObservableList<AccountTemplate> acc) {
-		Konti tempKonti = new Konti();
-		for (int i = 0; i < acc.size(); i++) {
-			tempKonti.addAccount(acc.get(i));
-		}
-
-		setAccounts(tempKonti);
-	}
-
-	public Konti getAccounts() {
-		return konti;
-	}
 
 	public User() {
 

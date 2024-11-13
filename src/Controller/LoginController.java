@@ -1,13 +1,9 @@
 package Controller;
 
 import java.io.IOException;
-import java.sql.ResultSet;
 
 import javax.naming.AuthenticationException;
 
-import Model.User;
-import Model.Accounts.Konti;
-import Services.Database;
 import Services.UserService;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -33,11 +29,9 @@ public class LoginController {
     private static final String LOGIN_FAILED = "Login failed: ";
 	private static final String LOAD_FAILED = "Failed to load main page.";
 
-	private Database database;
     private UserService userService;
 
 	public LoginController() {
-        this.database = Database.getInstance();
         this.userService = UserService.getInstance();
     }
 
@@ -46,24 +40,12 @@ public class LoginController {
         String password = txtFieldPassword.getText();
 
         try {
-			//TODO: This should be moved to user service instead of right from db.
-            User user = this.database.login(email, password);
-            initializeUserSession(user);
+            this.userService.login(email, password);
+            lblError.setText(LOGIN_SUCCESS);
             displayMainPage();
         } catch (AuthenticationException e) {
             loginFail(e.getMessage());
         }
-    }
-
-	//TODO: Refactor this to be in UserService
-    private void initializeUserSession(User user) {
-        Konti konti = new Konti();
-		ResultSet accResultSet = this.database.getAccounts(user.getUserID());
-        konti.addAccounts(accResultSet);
-        user.setAccounts(konti);
-
-        this.userService.setCurrentUser(user);
-        lblError.setText(LOGIN_SUCCESS);
     }
 
     private void loginFail(String message) {

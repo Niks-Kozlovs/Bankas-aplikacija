@@ -1,16 +1,19 @@
 package Services;
 
-import Model.User;
+import java.util.ArrayList;
 
-//TODO: Also add services
-//https://softwareengineering.stackexchange.com/questions/230307/mvc-what-is-the-difference-between-a-model-and-a-service
+import javax.naming.AuthenticationException;
+
+import Model.User;
+import Model.Accounts.Account;
 
 public class UserService {
     private static UserService instance;
+    private Database database;
     private User currentUser;
 
     private UserService() {
-        currentUser = new User();
+        this.database = Database.getInstance();
     }
 
     public static UserService getInstance() {
@@ -18,6 +21,18 @@ public class UserService {
             instance = new UserService();
         }
         return instance;
+    }
+
+    public void login(String email, String password) throws AuthenticationException {
+        this.currentUser = this.database.login(email, password);
+    }
+
+    public ArrayList<Account> getUserAccounts() {
+        return this.database.getAccounts(currentUser.getUserID());
+    }
+
+    public void logout() {
+        currentUser = null;
     }
 
     public User getCurrentUser() {

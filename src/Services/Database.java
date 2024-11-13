@@ -3,18 +3,20 @@ package Services;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
 
+import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Currency;
 
 import javax.naming.AuthenticationException;
 
 import Model.User;
-import Model.Accounts.AccountTemplate;
-import Model.Accounts.AlgasKonts;
-import Model.Accounts.KreditaKonts;
-import Model.Accounts.NoguldijumaKonts;
+import Model.Accounts.AccountType;
+import Model.Accounts.Account;
 import at.favre.lib.crypto.bcrypt.BCrypt;
 
 public class Database {
@@ -85,7 +87,8 @@ public class Database {
 			stmt.executeUpdate();
 
 			User user = getUser(name, surname, email);
-			addAccount(user.getUserID(), AccountTemplate.ALGAS_KONTS, (float) 0.00, "EUR");
+			//TODO: MOve to account service
+			// addAccount(user.getUserID(), AccountType.ALGAS_KONTS, (float) 0.00, "EUR");
 
 			return user;
 
@@ -242,30 +245,14 @@ public class Database {
 		return false;
 	}
 
-	public static void log(String name, String logMessage) {
-
-		try {
-			java.sql.Connection myConnLog = DriverManager.getConnection(URL, USERNAME, PASS);
-			myConnLog.createStatement();
-			java.sql.PreparedStatement stmt = myConnLog
-					.prepareStatement("INSERT INTO `log` (`User`, `LogMessage`) VALUES ( ?, ?)");
-			stmt.setString(1, name);
-			stmt.setString(2, logMessage);
-			stmt.executeUpdate();
-		} catch (SQLException e) {
-			showError();
-			e.printStackTrace();
-		}
-	}
-
-	public void addAccount(int owner, int type, float value, String currency) {
-		try {
+	public void addAccount(int owner, Account acc) {
+				try {
 			java.sql.PreparedStatement stmt = myConn.prepareStatement(
 					"INSERT INTO `accounts`(`Number`, `Owner`, `Type`, `Value`, `Currency`) VALUES ('0',?,?,?,?);");
 			stmt.setInt(1, owner);
-			stmt.setInt(2, type);
-			stmt.setFloat(3, value);
-			stmt.setString(4, currency);
+			stmt.setInt(2, acc.getAccountType().ordinal());
+			stmt.setDouble(3, acc.getBalance().doubleValue());
+			stmt.setString(4, acc.getMoneyType());
 
 			stmt.executeUpdate();
 		} catch (SQLException e) {
@@ -274,21 +261,52 @@ public class Database {
 		}
 	}
 
-	public void addAccount(int owner, AccountTemplate acc) {
-		addAccount(owner, acc.getAccountType(), acc.getMoney().floatValue(), acc.getMoneyType());
+	public ArrayList<Account> getAccounts(int owner) {
+        ArrayList<Account> accounts = new ArrayList<Account>();
+        String sql = "SELECT * FROM accounts WHERE userID = ?";
+        try (PreparedStatement pstmt = myConn.prepareStatement(sql)) {
+            pstmt.setInt(1, owner);
+			try (ResultSet rs = pstmt.executeQuery();) {
+				while (rs.next()) {
+					int accountNumber = rs.getInt("Number");
+					BigDecimal balance = rs.getBigDecimal("Value");
+					Currency currency = Currency.getInstance(rs.getString("Currency"));
+					AccountType accountType = AccountType.valueOf(rs.getString("Type"));
+					Account account = new Account(balance, currency, accountNumber, accountType);
+					accounts.add(account);
+				}
+			} catch (SQLException e) {
+				e.printStackTrace();
+			}
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return accounts;
 	}
 
-	public ResultSet getAccounts(int owner) {
-		try {
-			java.sql.PreparedStatement stmt = myConn.prepareStatement("SELECT * from accounts WHERE Owner = ?");
-			stmt.setInt(1, owner);
+	private Account getAccount(int accountNumber) {
+		String sql = "SELECT * FROM `accounts` WHERE Number = ?";
+		try (PreparedStatement pstmt = myConn.prepareStatement(sql)) {
+			pstmt.setInt(1, accountNumber);
+			try (ResultSet rs = pstmt.executeQuery()) {
+				if (!rs.next()) {
+					return null;
+				}
 
-			return stmt.executeQuery();
+				int number = rs.getInt("Number");
+				BigDecimal balance = rs.getBigDecimal("Value");
+				Currency currency = Currency.getInstance(rs.getString("Currency"));
+				AccountType accountType = AccountType.valueOf(rs.getString("Type"));
+				return new Account(balance, currency, number, accountType);
+			} catch (SQLException e) {
+				e.printStackTrace();
+				return null;
+			}
 		} catch (SQLException e) {
-			showError();
 			e.printStackTrace();
 			return null;
 		}
+
 	}
 
 	public void removeAccount(int number) {
@@ -302,30 +320,31 @@ public class Database {
 		}
 	}
 
+	//TODO: Move to account service
 	// Proud of this method
 	public boolean sendMoney(int fromWho, float amount, int toWho) {
 		// Account information after getting it from DB
-		AccountTemplate accReceiver, accSender;
+		Account accReceiver, accSender;
 		// Ja nav naudas
 
 		// Get account info for updating
-		accReceiver = getAccountInfo(toWho);
-		accSender = getAccountInfo(fromWho);
+		accReceiver = getAccount(toWho);
+		accSender = getAccount(fromWho);
 
-		if (accSender.getMoney().floatValue() - amount < 0) {
-			return false;
-		}
+		// if (accSender.getMoney().floatValue() - amount < 0) {
+		// 	return false;
+		// }
 
-		if (accReceiver == null || accSender == null)
-			return false;
+		// if (accReceiver == null || accSender == null)
+		// 	return false;
 
-		if (isSameOwner(fromWho, toWho)) {
-			accReceiver.addMoney(amount);
-			accSender.removeMoney(amount);
-		} else {
-			accReceiver.receiveMoney(amount);
-			accSender.sendMoney(amount);
-		}
+		// if (isSameOwner(fromWho, toWho)) {
+		// 	accReceiver.addMoney(amount);
+		// 	accSender.removeMoney(amount);
+		// } else {
+		// 	accReceiver.receiveMoney(amount);
+		// 	accSender.sendMoney(amount);
+		// }
 		updateAccountInDB(accReceiver);
 		updateAccountInDB(accSender);
 
@@ -357,9 +376,10 @@ public class Database {
 		return false;
 	}
 
+	//TODO: Move to account service
 	public boolean addMoney(int accountNumber, float amount) {
-		AccountTemplate acc;
-		acc = getAccountInfo(accountNumber);
+		Account acc;
+		acc = getAccount(accountNumber);
 
 		if (acc == null) {
 			return false;
@@ -370,32 +390,14 @@ public class Database {
 		return true;
 	}
 
+	//TODO: Move to account service
 	public boolean removeMoney(int accountNumber, float amount) {
 		return addMoney(accountNumber, (amount * -1));
 	}
 
-	private AccountTemplate getAccountInfo(int accountNumber) {
-		ResultSet result;
-		AccountTemplate acc = null;
-		try {
-			java.sql.PreparedStatement stmt = myConn.prepareStatement("SELECT * FROM `accounts` WHERE Number = ?");
-			stmt.setInt(1, accountNumber);
-			result = stmt.executeQuery();
-			result.next();
-			acc = createAccountBasedOnType(result.getInt("Type"));
-			acc.setAccountType(result.getInt("Type"));
-			acc.setMoney(result.getBigDecimal("Value"));
-			acc.setAccountNumber(accountNumber);
 
-			return acc;
-		} catch (SQLException e) {
-			e.printStackTrace();
-			return null;
-		}
 
-	}
-
-	private void updateAccountInDB(AccountTemplate acc) {
+	private void updateAccountInDB(Account acc) {
 		try {
 			java.sql.PreparedStatement stmt = myConn.prepareStatement("UPDATE accounts SET Value = ? WHERE Number = ?");
 			stmt.setFloat(1, acc.getMoney().floatValue());
@@ -409,6 +411,7 @@ public class Database {
 
 	}
 
+	//TODO: Move to user service
 	public boolean loginAdmin(int userID, String password) {
 		ResultSet rs = null;
 		try {
@@ -435,17 +438,19 @@ public class Database {
 
 	}
 
-	// For using addmoney functions which isnt in the abstract class
-	public static AccountTemplate createAccountBasedOnType(int type) {
-		switch (type) {
-			case AccountTemplate.ALGAS_KONTS:
-				return new AlgasKonts();
-			case AccountTemplate.KREDITA_KONTS:
-				return new KreditaKonts();
-			case AccountTemplate.NOGULDIJUMA_KONTS:
-				return new NoguldijumaKonts();
-			default:
-				return null;
+	public static void log(String name, String logMessage) {
+
+		try {
+			java.sql.Connection myConnLog = DriverManager.getConnection(URL, USERNAME, PASS);
+			myConnLog.createStatement();
+			java.sql.PreparedStatement stmt = myConnLog
+					.prepareStatement("INSERT INTO `log` (`User`, `LogMessage`) VALUES ( ?, ?)");
+			stmt.setString(1, name);
+			stmt.setString(2, logMessage);
+			stmt.executeUpdate();
+		} catch (SQLException e) {
+			showError();
+			e.printStackTrace();
 		}
 	}
 
