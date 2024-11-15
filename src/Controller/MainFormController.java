@@ -3,18 +3,21 @@ package Controller;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.net.URL;
+import java.util.Arrays;
 import java.util.Currency;
+import java.util.List;
 import java.util.ResourceBundle;
+import java.util.stream.Stream;
 
 import Model.User;
-import Model.Accounts.AccountTemplate;
-import Model.Accounts.Konti;
+import Model.Accounts.Account;
+import Model.Accounts.AccountType;
 import Services.Database;
 import Services.UserService;
-import Util.InputValidator;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.collections.transformation.FilteredList;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
@@ -30,9 +33,12 @@ import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.stage.Stage;
 
 public class MainFormController implements Initializable {
+	Database db = Database.getInstance();
+	UserService userService = UserService.getInstance();
 	User user;
-	Database db;
-	AccountTemplate selectedAccount = null;
+	Account selectedAccount = null;
+	ObservableList<Account> accounts = FXCollections.observableArrayList(userService.getUserAccounts());
+	FilteredList<Account> filteredAccounts = new FilteredList<>(accounts);
 
 	@FXML
 	private Label lblName;
@@ -46,10 +52,10 @@ public class MainFormController implements Initializable {
 	private Label lblStatus;
 
 	@FXML
-	private TableView<AccountTemplate> listAccounts = new TableView<>();
+	private TableView<Account> listAccounts = new TableView<Account>();
 
 	@FXML
-	private ComboBox<String> filterBox; // Its a combobox for filtering the accounts in the list
+	private ComboBox<String> filterBox;
 
 	@FXML
 	private TextField txtTransferNr;
@@ -70,149 +76,67 @@ public class MainFormController implements Initializable {
 
 	@Override
 	public void initialize(URL arg0, ResourceBundle arg1) {
-		this.db = Database.getInstance();
-		this.user = UserService.getInstance().getCurrentUser();
+		this.user = userService.getCurrentUser();
 
 		if (!this.user.getIsAdmin()) {
 			btnOpenAdmin.setVisible(false);
 		}
 
+		populateAccountsList();
+
 		lblAccount.setText("Selected account: none");
 		lblName.setText("Welcome " + user.getName() + "! (" + user.getUserID() + ")");
-		populateAccountsList(user.getAccounts());
-		filterBox.getItems().addAll("Algas konts", "Noguldijuma konts", "Kredita konts", "All");
+		String[] accountNames = Stream.of(AccountType.values())
+			.map(AccountType::getName)
+			.toArray(String[]::new);
+
+		filterBox.getItems().addAll(accountNames);
+		filterBox.getItems().add("All");
 	}
 
-	private void populateAccountsList(Konti accounts) {
-		TableColumn<AccountTemplate, Integer> accountNumber = new TableColumn<>("Account number");
-		accountNumber.setMinWidth(100);
-		accountNumber.setCellValueFactory(new PropertyValueFactory<>("accountNumber"));
+	private void populateAccountsList() {
+		TableColumn<Account, Integer> accountNumber = new TableColumn<Account, Integer>("Account number");
+		accountNumber.setCellValueFactory(new PropertyValueFactory<Account, Integer>("accountNumber"));
 
-		TableColumn<AccountTemplate, BigDecimal> money = new TableColumn<>("Money");
-		money.setCellValueFactory(new PropertyValueFactory<>("money"));
+		TableColumn<Account, BigDecimal> money = new TableColumn<Account, BigDecimal>("Balance");
+		money.setCellValueFactory(new PropertyValueFactory<Account, BigDecimal>("balance"));
 
-		TableColumn<AccountTemplate, Currency> moneyType = new TableColumn<>("Currency");
-		moneyType.setCellValueFactory(new PropertyValueFactory<>("moneyType"));
+		TableColumn<Account, Currency> moneyType = new TableColumn<Account, Currency>("Currency");
+		moneyType.setCellValueFactory(new PropertyValueFactory<Account, Currency>("moneyType"));
 
-		TableColumn<AccountTemplate, String> accountType = new TableColumn<>("Account type");
-		accountType.setCellValueFactory(new PropertyValueFactory<>("accountTypeString"));
+		TableColumn<Account, String> accountType = new TableColumn<Account, String>("Account type");
+		accountType.setCellValueFactory(new PropertyValueFactory<Account, String>("accountName"));
 
-		listAccounts.setItems(getAccounts(accounts));
-		listAccounts.getColumns().addAll(accountNumber, money, moneyType, accountType);
-		updateStats();
-	}
-
-	// Sets up the stats for the filtered accounts
-	// if noguldijuma konts is selected then only stats for those accounts will be
-	// shown
-	// to see all the stats there is an all filter option
-	private void updateStats() {
-		BigDecimal money = new BigDecimal(0);
-		int count = 0;
-		String moneyType = "EUR";
-
-		for (AccountTemplate item : listAccounts.getItems()) {
-			count++;
-			money = money.add(item.getMoney());
-		}
-		if (count > 0)
-			moneyType = listAccounts.getItems().get(0).getMoneyType();
-
-		// Rounds to two decimal points like all money is in modern society
-		money.setScale(2);
-
-		String filterBoxValue = filterBox.getValue();
-		// When the window is first the comboboxes value is null
-		if (filterBoxValue == null) {
-			filterBoxValue = "all";
-		}
-
-		lblMoney.setText(
-				"Sum of money for " + filterBoxValue.toLowerCase() + " is " + money.toString() + " " + moneyType);
-		lblCount.setText("There are " + count + " accounts");
-	}
-	
-	//Gets all the arraylists in the user object and turns it into one observable list for the table
-	private ObservableList<AccountTemplate> getAccounts(Konti accounts) {
-		ObservableList<AccountTemplate> acc = FXCollections.observableArrayList();
-		for (int i = 0; i < accounts.getAlgasKonti().size(); i++) {
-			acc.add(accounts.getAlgasKonti().get(i));
-		}
-
-		for (int i = 0; i < accounts.getNoguldijumaKonti().size(); i++) {
-			acc.add(accounts.getNoguldijumaKonti().get(i));
-		}
-
-		for (int i = 0; i < accounts.getKreditaKonti().size(); i++) {
-			acc.add(accounts.getKreditaKonti().get(i));
-		}
-		return acc;
-	}
-
-	// If it is for adding/removing money then set the account number you donw want to use to -1
-	public void refreshTableafterTransfer(int accNrTransferedFrom, int accNrTransferedTo, float money) {
-
-		ObservableList<AccountTemplate> acc = getAccounts(user.getAccounts());
-
-		for (int i = 0; i < acc.size(); i++) {
-			if (accNrTransferedTo != -1 && acc.get(i).getAccountNumber() == accNrTransferedTo) {
-				AccountTemplate accTemp = acc.get(i);
-				accTemp.addMoney(money);
-				acc.set(i, accTemp);
-			}
-
-			if (accNrTransferedFrom != -1 && acc.get(i).getAccountNumber() == accNrTransferedFrom) {
-				AccountTemplate accTemp = acc.get(i);
-				accTemp.removeMoney(money);
-				acc.set(i, accTemp);
-			}
-		}
-
-		user.setAccounts(acc);
-		listAccounts.setItems(acc);
-	}
-	
-	//Combobox changed selection
-	@FXML
-	public void updateList() {
-		ObservableList<AccountTemplate> accounts = getAccounts(user.getAccounts());
-		lblAccount.setText("Selected account: none");
-		if (listAccounts.getItems().size() > 0) {
-			setFieldsAndButtons(true);
-		}
-		if (filterBox.getValue().equals("All")) {
-			listAccounts.setItems(accounts);
-			updateStats();
-			return;
-		}
-
-		ObservableList<AccountTemplate> filteredAccounts = FXCollections.observableArrayList();
-		;
-		for (int i = 0; i < accounts.size(); i++) {
-			// If account type equals selected
-			if (accounts.get(i).getAccountTypeString().equals(filterBox.getValue())) {
-				filteredAccounts.add(accounts.get(i));
-			}
-		}
+		List<TableColumn<Account, ?>> columns = Arrays.asList(accountNumber, money, moneyType, accountType);
+		listAccounts.getColumns().addAll(columns);
 
 		listAccounts.setItems(filteredAccounts);
-		updateStats();
 	}
 
-	
+	@FXML
+	public void onAccountTypeChanged() {
+		String selectedType = filterBox.getSelectionModel().getSelectedItem();
+		filteredAccounts.setPredicate(account -> {
+			if (selectedType.equals("All")) {
+				return true;
+			}
+			return account.getAccountName().equals(selectedType);
+		});
+	}
+
 	//Table changed the selection (clicked on account)
 	@FXML
 	public void selectionChanged() {
-		int selectedIndex = listAccounts.getSelectionModel().getSelectedIndex();
+		// int selectedIndex = listAccounts.getSelectionModel().getSelectedIndex();
 
-		if (selectedIndex != -1) {
-			setFieldsAndButtons(false);
-			selectedAccount = listAccounts.getItems().get(selectedIndex);
-			lblAccount.setText("Selected account: " + selectedAccount.getAccountNumber());
-		} else {
-			setFieldsAndButtons(true);
-			lblAccount.setText("Selected account: none");
-		}
+		// if (selectedIndex != -1) {
+		// 	setFieldsAndButtons(false);
+		// 	selectedAccount = listAccounts.getItems().get(selectedIndex);
+		// 	lblAccount.setText("Selected account: " + selectedAccount.getAccountNumber());
+		// } else {
+		// 	setFieldsAndButtons(true);
+		// 	lblAccount.setText("Selected account: none");
+		// }
 	}
 	
 	private void setFieldsAndButtons(boolean bool) {
@@ -225,106 +149,102 @@ public class MainFormController implements Initializable {
 
 	@FXML
 	public void transferClicked() {
-		String account = txtTransferNr.getText();
-		String moneyStr = txtAddMoney.getText();
+		// String account = txtTransferNr.getText();
+		// String moneyStr = txtAddMoney.getText();
 		
-		if (!(InputValidator.checkInteger(account) && InputValidator.checkFloat(moneyStr))) {
-			lblStatus.setText("Invalid account number or money!");
-			return;
-		}
-		int selectedAccountNumber = selectedAccount.getAccountNumber();
-		int accountToTransferTo = Integer.parseInt(account);
-		float money = Float.parseFloat(moneyStr);
+		// if (!(InputValidator.checkInteger(account) && InputValidator.checkFloat(moneyStr))) {
+		// 	lblStatus.setText("Invalid account number or money!");
+		// 	return;
+		// }
+		// int selectedAccountNumber = selectedAccount.getAccountNumber();
+		// int accountToTransferTo = Integer.parseInt(account);
+		// float money = Float.parseFloat(moneyStr);
 		
-		if (money <= 0) {
-			lblStatus.setText("Money is negative!");
-			return;
-		}
+		// if (money <= 0) {
+		// 	lblStatus.setText("Money is negative!");
+		// 	return;
+		// }
 
-		if (db.sendMoney(selectedAccountNumber, money, accountToTransferTo)) {
-			refreshTableafterTransfer(selectedAccountNumber, accountToTransferTo, money);
-			listAccounts.refresh();
-			Database.log(Integer.toString(user.getUserID()),
-					"transfered money from " + selectedAccountNumber + " to" + accountToTransferTo + "(" + money + ")");
+		// if (db.sendMoney(selectedAccountNumber, money, accountToTransferTo)) {
+		// 	refreshTableafterTransfer(selectedAccountNumber, accountToTransferTo, money);
+		// 	listAccounts.refresh();
+		// 	Database.log(Integer.toString(user.getUserID()),
+		// 			"transfered money from " + selectedAccountNumber + " to" + accountToTransferTo + "(" + money + ")");
 
-		} else {
-			lblStatus.setText(NO_TRANSFER);
-		}
+		// } else {
+		// 	lblStatus.setText(NO_TRANSFER);
+		// }
 
-		updateStats();
+		// updateStats();
 	}
 
 	@FXML
 	public void addMoneyClicked() {
-		String moneyStr = txtAddMoney.getText();
-		if (!InputValidator.checkFloat(moneyStr)) {
-			lblStatus.setText("Invalid money entered!");
-			return;
-		}
-		float money = Float.parseFloat(moneyStr);
-		int account = selectedAccount.getAccountNumber();
+		// String moneyStr = txtAddMoney.getText();
+		// if (!InputValidator.checkFloat(moneyStr)) {
+		// 	lblStatus.setText("Invalid money entered!");
+		// 	return;
+		// }
+		// float money = Float.parseFloat(moneyStr);
+		// int account = selectedAccount.getAccountNumber();
 		
-		if (money <= 0) {
-			lblStatus.setText("Money is negative!");
-			return;
-		}
+		// if (money <= 0) {
+		// 	lblStatus.setText("Money is negative!");
+		// 	return;
+		// }
 
-		if (db.addMoney(account, money)) {
-			refreshTableafterTransfer(-1, account, money);
-			listAccounts.refresh();
-			Database.log(Integer.toString(user.getUserID()), "added money to " + account + ": " + money);
-		} else {
-			lblStatus.setText(NO_TRANSFER);
-		}
+		// if (db.addMoney(account, money)) {
+		// 	refreshTableafterTransfer(-1, account, money);
+		// 	listAccounts.refresh();
+		// 	Database.log(Integer.toString(user.getUserID()), "added money to " + account + ": " + money);
+		// } else {
+		// 	lblStatus.setText(NO_TRANSFER);
+		// }
 
-		updateStats();
+		// updateStats();
 
 	}
 
 	@FXML
 	public void removeMoneyClicked() {
-		String moneyStr = txtAddMoney.getText();
-		if (!InputValidator.checkFloat(moneyStr)) {
-			lblStatus.setText("Invalid money entered!");
-			return;
-		}
-		float money = Float.parseFloat(moneyStr);
-		if (money <= 0) {
-			lblStatus.setText("Money is negative!");
-			return;
-		}
+		// String moneyStr = txtAddMoney.getText();
+		// if (!InputValidator.checkFloat(moneyStr)) {
+		// 	lblStatus.setText("Invalid money entered!");
+		// 	return;
+		// }
+		// float money = Float.parseFloat(moneyStr);
+		// if (money <= 0) {
+		// 	lblStatus.setText("Money is negative!");
+		// 	return;
+		// }
 		
-		int account = selectedAccount.getAccountNumber();
-		if (db.removeMoney(account, money)) {
-			refreshTableafterTransfer(account, -1, money);
-			listAccounts.refresh();
-			Database.log(Integer.toString(user.getUserID()), "removed money from " + account + ": " + money);
-		} else {
-			lblStatus.setText(NO_TRANSFER);
-		}
+		// int account = selectedAccount.getAccountNumber();
+		// if (db.removeMoney(account, money)) {
+		// 	refreshTableafterTransfer(account, -1, money);
+		// 	listAccounts.refresh();
+		// 	Database.log(Integer.toString(user.getUserID()), "removed money from " + account + ": " + money);
+		// } else {
+		// 	lblStatus.setText(NO_TRANSFER);
+		// }
 
-		updateStats();
+		// updateStats();
 	}
 
 	@FXML
 	public void openAdminPanel() {
-		try {
-			FXMLLoader loader = new FXMLLoader(getClass().getResource("/View/AdminPage.fxml"));
-			Parent root = (Parent) loader.load();
-
-			AdminPageController controller = loader.getController();
-			controller.setUp(user, db);
-			Stage stage = new Stage();
-			stage.setResizable(false);
-
-			stage.setScene(new Scene(root));
-			stage.show();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+        try {
+            FXMLLoader loader = new FXMLLoader();
+            loader.setLocation(getClass().getResource("/View/AdminPage.fxml"));
+            Parent root = loader.load();
+            Stage stage = (Stage) btnOpenAdmin.getScene().getWindow();
+            Scene scene = new Scene(root);
+            stage.setScene(scene);
+            stage.show();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 	}
 
-	//Closes all open windows for program and shuts it down
 	public void shutdown() {
 		Platform.exit();
 	}

@@ -183,6 +183,7 @@ public class Database {
 			stmt.setString(2, surname);
 			stmt.setString(3, email);
 			stmt.executeUpdate();
+			//TODO: Move to admin service
 			log(who, "Deleted user" + name + " " + surname + " " + email);
 		} catch (SQLException e) {
 			showError();
@@ -200,7 +201,7 @@ public class Database {
 			if (!rs.next()) {
 				throw new AuthenticationException("User not found");
 			}
-
+			//TODO: Move to user service
 			String hashedPass = rs.getString("Password");
 			boolean isPasswordCorrect = BCrypt.verifyer().verify(password.toCharArray(), hashedPass).verified;
 
@@ -250,7 +251,7 @@ public class Database {
 			java.sql.PreparedStatement stmt = myConn.prepareStatement(
 					"INSERT INTO `accounts`(`Number`, `Owner`, `Type`, `Value`, `Currency`) VALUES ('0',?,?,?,?);");
 			stmt.setInt(1, owner);
-			stmt.setInt(2, acc.getAccountType().ordinal());
+			stmt.setString(2, acc.getAccountType().name());
 			stmt.setDouble(3, acc.getBalance().doubleValue());
 			stmt.setString(4, acc.getMoneyType());
 
@@ -263,7 +264,7 @@ public class Database {
 
 	public ArrayList<Account> getAccounts(int owner) {
         ArrayList<Account> accounts = new ArrayList<Account>();
-        String sql = "SELECT * FROM accounts WHERE userID = ?";
+        String sql = "SELECT * FROM accounts WHERE Owner = ?";
         try (PreparedStatement pstmt = myConn.prepareStatement(sql)) {
             pstmt.setInt(1, owner);
 			try (ResultSet rs = pstmt.executeQuery();) {
@@ -385,7 +386,7 @@ public class Database {
 			return false;
 		}
 
-		acc.addMoney(amount);
+		// acc.addMoney(amount);
 		updateAccountInDB(acc);
 		return true;
 	}
@@ -400,7 +401,7 @@ public class Database {
 	private void updateAccountInDB(Account acc) {
 		try {
 			java.sql.PreparedStatement stmt = myConn.prepareStatement("UPDATE accounts SET Value = ? WHERE Number = ?");
-			stmt.setFloat(1, acc.getMoney().floatValue());
+			// stmt.setFloat(1, acc.getMoney().floatValue());
 			stmt.setInt(2, acc.getAccountNumber());
 			stmt.executeUpdate();
 

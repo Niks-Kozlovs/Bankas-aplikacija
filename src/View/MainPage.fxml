@@ -15,7 +15,7 @@
 			<columns>
 			</columns>
 		</TableView>
-		<ComboBox fx:id="filterBox" layoutX="170.0" layoutY="10.0" onAction="#updateList" prefHeight="25.0" prefWidth="159.0" promptText="Select account types" visibleRowCount="4" />
+		<ComboBox fx:id="filterBox" layoutX="170.0" layoutY="10.0" onAction="#onAccountTypeChanged" prefHeight="25.0" prefWidth="159.0" promptText="Select account types" visibleRowCount="4" />
       <TextField fx:id="txtTransferNr" layoutX="14.0" layoutY="73.0" prefHeight="25.0" prefWidth="220.0" promptText="Account number to transfer to" />
       <Button fx:id="btnTransfer" layoutX="245.0" layoutY="73.0" mnemonicParsing="false" onAction="#transferClicked" prefHeight="25.0" prefWidth="85.0" text="Transfer" />
       <TextField fx:id="txtAddMoney" layoutX="14.0" layoutY="112.0" prefHeight="25.0" prefWidth="220.0" promptText="How much money" />

@@ -53,6 +53,10 @@ public class Account {
 		this.accountNumber = accountNumber;
 	}
 
+	public String getAccountName() {
+		return accountType.getName();
+	}
+
 	public void printInfo() {
 		System.out.printf(
 			"Balance: %s%nMoney type:%s%nAccount type: %d%n",
