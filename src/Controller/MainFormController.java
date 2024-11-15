@@ -12,8 +12,9 @@ import java.util.stream.Stream;
 import Model.User;
 import Model.Accounts.Account;
 import Model.Accounts.AccountType;
-import Services.Database;
+import Services.TransactionService;
 import Services.UserService;
+import Util.InputValidator;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.collections.FXCollections;
@@ -34,8 +35,8 @@ import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.stage.Stage;
 
 public class MainFormController implements Initializable {
-	Database db = Database.getInstance();
 	UserService userService = UserService.getInstance();
+	TransactionService transactionService = TransactionService.getInstance();
 	User user;
 	SimpleIntegerProperty selectedAccountNumber = new SimpleIntegerProperty(-1);
 	ObservableList<Account> accounts = FXCollections.observableArrayList(userService.getUserAccounts());
@@ -92,10 +93,6 @@ public class MainFormController implements Initializable {
 			}
 
 			int accountNumber = newSelection.intValue();
-			// Account selectedAccount = accounts.stream()
-			// 	.filter(account -> account.getAccountNumber() == accountNumber)
-			// 	.findFirst()
-			// 	.orElse(null);
 			setFieldsAndButtons(false);
 			lblAccount.setText("Selected account: " + accountNumber);
 		});
@@ -112,6 +109,9 @@ public class MainFormController implements Initializable {
 		filterBox.getItems().add("All");
 
 		setFieldsAndButtons(true);
+
+		txtTransferNr.setTextFormatter(InputValidator.getOnlyDigitsFormatter());
+		txtAddMoney.setTextFormatter(InputValidator.getOnlyDoublTextFormatter());
 	}
 
 	private void populateAccountsList() {
@@ -155,18 +155,10 @@ public class MainFormController implements Initializable {
 		selectedAccountNumber.set(selectedAccount.getAccountNumber());
 	}
 
-	private void setFieldsAndButtons(boolean bool) {
-		txtTransferNr.setDisable(bool);
-		txtAddMoney.setDisable(bool);
-		btnTransfer.setDisable(bool);
-		btnAddMoney.setDisable(bool);
-		btnRemoveMoney.setDisable(bool);
-	}
-
 	@FXML
 	public void transferClicked() {
-		// String account = txtTransferNr.getText();
-		// String moneyStr = txtAddMoney.getText();
+		String account = txtTransferNr.getText();
+		String moneyStr = txtAddMoney.getText();
 		
 		// if (!(InputValidator.checkInteger(account) && InputValidator.checkFloat(moneyStr))) {
 		// 	lblStatus.setText("Invalid account number or money!");
@@ -190,35 +182,18 @@ public class MainFormController implements Initializable {
 		// } else {
 		// 	lblStatus.setText(NO_TRANSFER);
 		// }
-
-		// updateStats();
 	}
 
 	@FXML
 	public void addMoneyClicked() {
-		// String moneyStr = txtAddMoney.getText();
-		// if (!InputValidator.checkFloat(moneyStr)) {
-		// 	lblStatus.setText("Invalid money entered!");
-		// 	return;
-		// }
-		// float money = Float.parseFloat(moneyStr);
-		// int account = selectedAccount.getAccountNumber();
-		
-		// if (money <= 0) {
-		// 	lblStatus.setText("Money is negative!");
-		// 	return;
-		// }
+		String moneyStr = txtAddMoney.getText();
+		BigDecimal money = new BigDecimal(moneyStr);
 
-		// if (db.addMoney(account, money)) {
-		// 	refreshTableafterTransfer(-1, account, money);
-		// 	listAccounts.refresh();
-		// 	Database.log(Integer.toString(user.getUserID()), "added money to " + account + ": " + money);
-		// } else {
-		// 	lblStatus.setText(NO_TRANSFER);
-		// }
+		Account selectedAccount = listAccounts.getSelectionModel().getSelectedItem();
+		transactionService.addMoney(selectedAccount, money);
+		accounts.set(accounts.indexOf(selectedAccount), selectedAccount);
 
-		// updateStats();
-
+		lblStatus.setText("Added " + money + " to account " + selectedAccount.getAccountNumber());
 	}
 
 	@FXML
@@ -244,6 +219,14 @@ public class MainFormController implements Initializable {
 		// }
 
 		// updateStats();
+	}
+
+	private void setFieldsAndButtons(boolean bool) {
+		txtTransferNr.setDisable(bool);
+		txtAddMoney.setDisable(bool);
+		btnTransfer.setDisable(bool);
+		btnAddMoney.setDisable(bool);
+		btnRemoveMoney.setDisable(bool);
 	}
 
 	@FXML

@@ -246,19 +246,48 @@ public class Database {
 		return false;
 	}
 
-	public void addAccount(int owner, Account acc) {
-				try {
-			java.sql.PreparedStatement stmt = myConn.prepareStatement(
-					"INSERT INTO `accounts`(`Number`, `Owner`, `Type`, `Value`, `Currency`) VALUES ('0',?,?,?,?);");
-			stmt.setInt(1, owner);
-			stmt.setString(2, acc.getAccountType().name());
-			stmt.setDouble(3, acc.getBalance().doubleValue());
-			stmt.setString(4, acc.getMoneyType());
 
-			stmt.executeUpdate();
+	public boolean addAccount(Account acc) {
+		String sql = "INSERT INTO `accounts`(`Number`, `Owner`, `Type`, `Value`, `Currency`) VALUES ('0',?,?,?,?)";
+		try (PreparedStatement pstmt = myConn.prepareStatement(sql)) {
+			pstmt.setInt(1, acc.getOwnerID());
+			pstmt.setString(2, acc.getAccountType().name());
+			pstmt.setDouble(3, acc.getBalance().doubleValue());
+			pstmt.setString(4, acc.getMoneyType());
+
+			return pstmt.executeUpdate() > 0;
 		} catch (SQLException e) {
 			showError();
 			e.printStackTrace();
+			return false;
+		}
+	}
+
+	public boolean updateAccount(Account account) {
+		String sql = "UPDATE accounts SET Value = ?, Type = ?, Currency = ? WHERE Number = ?";
+		try (PreparedStatement pstmt = myConn.prepareStatement(sql)) {
+			pstmt.setBigDecimal(1, account.getBalance());
+			pstmt.setString(2, account.getAccountType().name());
+			pstmt.setString(3, account.getMoneyType());
+			pstmt.setInt(4, account.getAccountNumber());
+			return pstmt.executeUpdate() > 0;
+		} catch (SQLException e) {
+			showError();
+			e.printStackTrace();
+			return false;
+		}
+	}
+
+	public boolean removeAccount(int number) {
+		String sql = "DELETE FROM accounts WHERE Number = ?";
+		try {
+			java.sql.PreparedStatement stmt = myConn.prepareStatement(sql);
+			stmt.setInt(1, number);
+			return stmt.executeUpdate() > 0;
+		} catch (SQLException e) {
+			showError();
+			e.printStackTrace();
+			return false;
 		}
 	}
 
@@ -273,7 +302,8 @@ public class Database {
 					BigDecimal balance = rs.getBigDecimal("Value");
 					Currency currency = Currency.getInstance(rs.getString("Currency"));
 					AccountType accountType = AccountType.valueOf(rs.getString("Type"));
-					Account account = new Account(balance, currency, accountNumber, accountType);
+					int ownerID = rs.getInt("Owner");
+					Account account = new Account(balance, currency, accountNumber, accountType, ownerID);
 					accounts.add(account);
 				}
 			} catch (SQLException e) {
@@ -298,7 +328,8 @@ public class Database {
 				BigDecimal balance = rs.getBigDecimal("Value");
 				Currency currency = Currency.getInstance(rs.getString("Currency"));
 				AccountType accountType = AccountType.valueOf(rs.getString("Type"));
-				return new Account(balance, currency, number, accountType);
+				int ownerID = rs.getInt("Owner");
+				return new Account(balance, currency, number, accountType, ownerID);
 			} catch (SQLException e) {
 				e.printStackTrace();
 				return null;
@@ -307,109 +338,6 @@ public class Database {
 			e.printStackTrace();
 			return null;
 		}
-
-	}
-
-	public void removeAccount(int number) {
-		try {
-			java.sql.PreparedStatement stmt = myConn.prepareStatement("Delete from accounts where Number = ?");
-			stmt.setInt(1, number);
-			stmt.executeUpdate();
-		} catch (SQLException e) {
-			showError();
-			e.printStackTrace();
-		}
-	}
-
-	//TODO: Move to account service
-	// Proud of this method
-	public boolean sendMoney(int fromWho, float amount, int toWho) {
-		// Account information after getting it from DB
-		Account accReceiver, accSender;
-		// Ja nav naudas
-
-		// Get account info for updating
-		accReceiver = getAccount(toWho);
-		accSender = getAccount(fromWho);
-
-		// if (accSender.getMoney().floatValue() - amount < 0) {
-		// 	return false;
-		// }
-
-		// if (accReceiver == null || accSender == null)
-		// 	return false;
-
-		// if (isSameOwner(fromWho, toWho)) {
-		// 	accReceiver.addMoney(amount);
-		// 	accSender.removeMoney(amount);
-		// } else {
-		// 	accReceiver.receiveMoney(amount);
-		// 	accSender.sendMoney(amount);
-		// }
-		updateAccountInDB(accReceiver);
-		updateAccountInDB(accSender);
-
-		return true;
-
-	}
-
-	// No bonuses when tranfering between the same owner (it can be exploited)
-	private boolean isSameOwner(int number1, int number2) {
-		try {
-			// Compares two accounts if they are the same then there will be one row in the
-			// result set
-			java.sql.PreparedStatement stmt = myConn.prepareStatement(
-					"Select * from accounts as acc,(SELECT Owner from accounts WHERE Number = ?) as acc2 where acc.Owner = acc2.Owner AnD acc.Number = ?");
-			stmt.setInt(1, number1);
-			stmt.setInt(2, number2);
-
-			ResultSet rs = stmt.executeQuery();
-
-			if (rs.next()) {
-				return true;
-			} else {
-				return false;
-			}
-		} catch (SQLException e) {
-			showError();
-			e.printStackTrace();
-		}
-		return false;
-	}
-
-	//TODO: Move to account service
-	public boolean addMoney(int accountNumber, float amount) {
-		Account acc;
-		acc = getAccount(accountNumber);
-
-		if (acc == null) {
-			return false;
-		}
-
-		// acc.addMoney(amount);
-		updateAccountInDB(acc);
-		return true;
-	}
-
-	//TODO: Move to account service
-	public boolean removeMoney(int accountNumber, float amount) {
-		return addMoney(accountNumber, (amount * -1));
-	}
-
-
-
-	private void updateAccountInDB(Account acc) {
-		try {
-			java.sql.PreparedStatement stmt = myConn.prepareStatement("UPDATE accounts SET Value = ? WHERE Number = ?");
-			// stmt.setFloat(1, acc.getMoney().floatValue());
-			stmt.setInt(2, acc.getAccountNumber());
-			stmt.executeUpdate();
-
-		} catch (SQLException e) {
-			showError();
-			e.printStackTrace();
-		}
-
 	}
 
 	//TODO: Move to user service

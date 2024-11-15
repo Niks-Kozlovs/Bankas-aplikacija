@@ -9,12 +9,14 @@ public class Account {
 	private BigDecimal balance = new BigDecimal("0");
 	private Currency moneyType = Currency.getInstance("EUR");
 	private AccountType accountType;
+	private int ownerID;
 
-	public Account(BigDecimal balance, Currency currency, int accountNumber, AccountType accountType) {
+	public Account(BigDecimal balance, Currency currency, int accountNumber, AccountType accountType, int ownerID) {
 		setBalance(balance);
 		setMoneyType(currency.getCurrencyCode());
 		setAccountNumber(accountNumber);
 		setAccountType(accountType);
+		setOwnerID(ownerID);
 	};
 
 	public void setAccountType(AccountType accountType) {
@@ -57,12 +59,21 @@ public class Account {
 		return accountType.getName();
 	}
 
+	public int getOwnerID() {
+		return ownerID;
+	}
+
+	public void setOwnerID(int ownerID) {
+		this.ownerID = ownerID;
+	}
+
 	public void printInfo() {
 		System.out.printf(
-			"Balance: %s%nMoney type:%s%nAccount type: %d%n",
+			"Balance: %s%nMoney type:%s%nAccount type: %d%n Owner: %s%n",
 			balance.toString(),
 			moneyType.getSymbol(),
-			this.getClass().getName()
+			this.getClass().getName(),
+			this.getOwnerID()
 		);
 	}
 }

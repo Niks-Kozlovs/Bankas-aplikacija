@@ -1,5 +1,7 @@
 package Util;
 
+import javafx.scene.control.TextFormatter;
+
 public class InputValidator {
 
 	private static final char[] specialCharactersLocalPart = { '!', '#', '$', '%', '&', '*', '+', '-', '/', '=', '?',
@@ -127,6 +129,33 @@ public class InputValidator {
 		} catch (NumberFormatException e) {
 			return false;
 		}
+	}
+
+	public static TextFormatter<String> getOnlyDigitsFormatter() {
+		return new TextFormatter<>(change -> {
+			if (change.getControlNewText().matches("^[0-9]*$")) {
+				return change;
+			}
+			return null;
+		});
+    }
+
+	public static TextFormatter<String> getOnlyDoublTextFormatter() {
+		return new TextFormatter<>(change -> {
+			if (change.getControlNewText().matches("^[0-9]*\\.?[0-9]{0,2}$")) {
+				return change;
+			}
+			return null;
+		});
+	}
+
+	public static TextFormatter<String> getEmailFormatter() {
+		return new TextFormatter<>(change -> {
+			if (change.getControlNewText().matches("^[a-zA-Z0-9@.]*$")) {
+				return change;
+			}
+			return null;
+		});
 	}
 
 }
