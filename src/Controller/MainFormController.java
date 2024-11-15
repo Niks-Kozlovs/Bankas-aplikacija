@@ -15,6 +15,7 @@ import Model.Accounts.AccountType;
 import Services.Database;
 import Services.UserService;
 import javafx.application.Platform;
+import javafx.beans.property.SimpleIntegerProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
@@ -36,7 +37,7 @@ public class MainFormController implements Initializable {
 	Database db = Database.getInstance();
 	UserService userService = UserService.getInstance();
 	User user;
-	Account selectedAccount = null;
+	SimpleIntegerProperty selectedAccountNumber = new SimpleIntegerProperty(-1);
 	ObservableList<Account> accounts = FXCollections.observableArrayList(userService.getUserAccounts());
 	FilteredList<Account> filteredAccounts = new FilteredList<>(accounts);
 
@@ -82,6 +83,23 @@ public class MainFormController implements Initializable {
 			btnOpenAdmin.setVisible(false);
 		}
 
+
+		selectedAccountNumber.addListener((obs, oldSelection, newSelection) -> {
+			if (newSelection.equals(-1)) {
+				setFieldsAndButtons(true);
+				lblAccount.setText("Selected account: none");
+				return;
+			}
+
+			int accountNumber = newSelection.intValue();
+			// Account selectedAccount = accounts.stream()
+			// 	.filter(account -> account.getAccountNumber() == accountNumber)
+			// 	.findFirst()
+			// 	.orElse(null);
+			setFieldsAndButtons(false);
+			lblAccount.setText("Selected account: " + accountNumber);
+		});
+
 		populateAccountsList();
 
 		lblAccount.setText("Selected account: none");
@@ -92,6 +110,8 @@ public class MainFormController implements Initializable {
 
 		filterBox.getItems().addAll(accountNames);
 		filterBox.getItems().add("All");
+
+		setFieldsAndButtons(true);
 	}
 
 	private void populateAccountsList() {
@@ -124,21 +144,17 @@ public class MainFormController implements Initializable {
 		});
 	}
 
-	//Table changed the selection (clicked on account)
 	@FXML
 	public void selectionChanged() {
-		// int selectedIndex = listAccounts.getSelectionModel().getSelectedIndex();
+		Account selectedAccount = listAccounts.getSelectionModel().getSelectedItem();
+		if (selectedAccount == null) {
+			selectedAccountNumber.set(-1);
+			return;
+		}
 
-		// if (selectedIndex != -1) {
-		// 	setFieldsAndButtons(false);
-		// 	selectedAccount = listAccounts.getItems().get(selectedIndex);
-		// 	lblAccount.setText("Selected account: " + selectedAccount.getAccountNumber());
-		// } else {
-		// 	setFieldsAndButtons(true);
-		// 	lblAccount.setText("Selected account: none");
-		// }
+		selectedAccountNumber.set(selectedAccount.getAccountNumber());
 	}
-	
+
 	private void setFieldsAndButtons(boolean bool) {
 		txtTransferNr.setDisable(bool);
 		txtAddMoney.setDisable(bool);
