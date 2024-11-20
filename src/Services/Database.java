@@ -14,16 +14,17 @@ import java.util.Currency;
 
 import Model.User;
 import Model.Accounts.AccountType;
+import io.github.cdimascio.dotenv.Dotenv;
 import Model.Accounts.Account;
 
 public class Database {
 	private static Database instance;
 	private Connection myConn;
 
-	// TODO: Move to env file
-	private static final String URL = "jdbc:mysql://localhost:3306/bankapp";
-	private static final String USERNAME = "test";
-	private static final String PASS = "1234";
+    private static final Dotenv dotenv = Dotenv.load();
+    private static final String URL = dotenv.get("DB_URL");
+    private static final String USERNAME = dotenv.get("DB_USERNAME");
+    private static final String PASS = dotenv.get("DB_PASSWORD");
 
 	private Database() {
 		connect();
