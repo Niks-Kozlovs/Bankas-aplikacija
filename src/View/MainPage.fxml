@@ -24,7 +24,7 @@
       <Label fx:id="lblCount" layoutX="13.0" layoutY="235.0" prefHeight="25.0" prefWidth="314.0" text="There are count accounts" />
       <Button fx:id="btnRemoveMoney" layoutX="245.0" layoutY="145.0" mnemonicParsing="false" onAction="#removeMoneyClicked" prefHeight="25.0" prefWidth="85.0" text="Remove" />
       <Label fx:id="lblAccount" layoutX="14.0" layoutY="48.0" />
-      <Label fx:id="lblStatus" layoutY="369.0" prefHeight="17.0" prefWidth="335.0" />
+      <Label fx:id="lblStatus" layoutX="13.0" layoutY="330.0" prefHeight="17.0" prefWidth="314.0" />
       <Button fx:id="btnOpenAdmin" layoutX="14.0" layoutY="357.0" mnemonicParsing="false" onAction="#openAdminPanel" text="Open admin panel" />
 	</children>
 </AnchorPane>

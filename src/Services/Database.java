@@ -253,7 +253,7 @@ public class Database {
 			pstmt.setInt(1, acc.getOwnerID());
 			pstmt.setString(2, acc.getAccountType().name());
 			pstmt.setDouble(3, acc.getBalance().doubleValue());
-			pstmt.setString(4, acc.getMoneyType());
+			pstmt.setString(4, acc.getCurrencyCode());
 
 			return pstmt.executeUpdate() > 0;
 		} catch (SQLException e) {
@@ -268,9 +268,39 @@ public class Database {
 		try (PreparedStatement pstmt = myConn.prepareStatement(sql)) {
 			pstmt.setBigDecimal(1, account.getBalance());
 			pstmt.setString(2, account.getAccountType().name());
-			pstmt.setString(3, account.getMoneyType());
+			pstmt.setString(3, account.getCurrencyCode());
 			pstmt.setInt(4, account.getAccountNumber());
 			return pstmt.executeUpdate() > 0;
+		} catch (SQLException e) {
+			showError();
+			e.printStackTrace();
+			return false;
+		}
+	}
+
+	public boolean updateAccounts(Account... accounts) {
+		String sql = "UPDATE accounts SET Value = ?, Type = ?, Currency = ? WHERE Number = ?";
+		try {
+			myConn.setAutoCommit(false);
+			try (PreparedStatement pstmt = myConn.prepareStatement(sql)) {
+				for (Account account : accounts) {
+					pstmt.setBigDecimal(1, account.getBalance());
+					pstmt.setString(2, account.getAccountType().name());
+					pstmt.setString(3, account.getCurrencyCode());
+					pstmt.setInt(4, account.getAccountNumber());
+					pstmt.addBatch();
+				}
+				pstmt.executeBatch();
+				myConn.commit();
+				return true;
+			} catch (SQLException e) {
+				myConn.rollback();
+				showError();
+				e.printStackTrace();
+				return false;
+			} finally {
+				myConn.setAutoCommit(true);
+			}
 		} catch (SQLException e) {
 			showError();
 			e.printStackTrace();
@@ -315,7 +345,7 @@ public class Database {
         return accounts;
 	}
 
-	private Account getAccount(int accountNumber) {
+	public Account getAccount(int accountNumber) {
 		String sql = "SELECT * FROM `accounts` WHERE Number = ?";
 		try (PreparedStatement pstmt = myConn.prepareStatement(sql)) {
 			pstmt.setInt(1, accountNumber);

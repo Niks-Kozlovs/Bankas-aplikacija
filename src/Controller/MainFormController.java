@@ -37,7 +37,6 @@ import javafx.stage.Stage;
 public class MainFormController implements Initializable {
 	UserService userService = UserService.getInstance();
 	TransactionService transactionService = TransactionService.getInstance();
-	User user;
 	SimpleIntegerProperty selectedAccountNumber = new SimpleIntegerProperty(-1);
 	ObservableList<Account> accounts = FXCollections.observableArrayList(userService.getUserAccounts());
 	FilteredList<Account> filteredAccounts = new FilteredList<>(accounts);
@@ -78,9 +77,9 @@ public class MainFormController implements Initializable {
 
 	@Override
 	public void initialize(URL arg0, ResourceBundle arg1) {
-		this.user = userService.getCurrentUser();
+		User user = userService.getCurrentUser();
 
-		if (!this.user.getIsAdmin()) {
+		if (!user.getIsAdmin()) {
 			btnOpenAdmin.setVisible(false);
 		}
 
@@ -122,7 +121,7 @@ public class MainFormController implements Initializable {
 		money.setCellValueFactory(new PropertyValueFactory<Account, BigDecimal>("balance"));
 
 		TableColumn<Account, Currency> moneyType = new TableColumn<Account, Currency>("Currency");
-		moneyType.setCellValueFactory(new PropertyValueFactory<Account, Currency>("moneyType"));
+		moneyType.setCellValueFactory(new PropertyValueFactory<Account, Currency>("currencySymbol"));
 
 		TableColumn<Account, String> accountType = new TableColumn<Account, String>("Account type");
 		accountType.setCellValueFactory(new PropertyValueFactory<Account, String>("accountName"));
@@ -157,68 +156,67 @@ public class MainFormController implements Initializable {
 
 	@FXML
 	public void transferClicked() {
-		String account = txtTransferNr.getText();
-		String moneyStr = txtAddMoney.getText();
-		
-		// if (!(InputValidator.checkInteger(account) && InputValidator.checkFloat(moneyStr))) {
-		// 	lblStatus.setText("Invalid account number or money!");
-		// 	return;
-		// }
-		// int selectedAccountNumber = selectedAccount.getAccountNumber();
-		// int accountToTransferTo = Integer.parseInt(account);
-		// float money = Float.parseFloat(moneyStr);
-		
-		// if (money <= 0) {
-		// 	lblStatus.setText("Money is negative!");
-		// 	return;
-		// }
+		int accountNr;
+		try {
+			accountNr = Integer.parseInt(txtTransferNr.getText());
+		} catch (NumberFormatException e) {
+			lblStatus.setText("Invalid account number");
+			return;
+		}
 
-		// if (db.sendMoney(selectedAccountNumber, money, accountToTransferTo)) {
-		// 	refreshTableafterTransfer(selectedAccountNumber, accountToTransferTo, money);
-		// 	listAccounts.refresh();
-		// 	Database.log(Integer.toString(user.getUserID()),
-		// 			"transfered money from " + selectedAccountNumber + " to" + accountToTransferTo + "(" + money + ")");
+		BigDecimal money = getMoney();
 
-		// } else {
-		// 	lblStatus.setText(NO_TRANSFER);
-		// }
+		if (money.equals(BigDecimal.ZERO)) {
+			return;
+		}
+
+		Account selectedAccount = listAccounts.getSelectionModel().getSelectedItem();
+
+		try {
+			Account receivingAccount = transactionService.sendMoney(selectedAccount, accountNr, money);
+
+			if (receivingAccount != null) {
+				for (int i = 0; i < accounts.size(); i++) {
+					if (accounts.get(i).getAccountNumber() == receivingAccount.getAccountNumber()) {
+						accounts.set(i, receivingAccount);
+						break;
+					}
+				}
+			}
+		} catch (IllegalArgumentException e) {
+			lblStatus.setText(e.getMessage());
+			return;
+		} catch (Exception e) {
+			lblStatus.setText(NO_TRANSFER);
+			return;
+		}
+
+		accounts.set(accounts.indexOf(selectedAccount), selectedAccount);
+		lblStatus.setText("Transferred " + money + " to account " + accountNr);
 	}
 
 	@FXML
 	public void addMoneyClicked() {
-		String moneyStr = txtAddMoney.getText();
-		BigDecimal money = new BigDecimal(moneyStr);
-
-		Account selectedAccount = listAccounts.getSelectionModel().getSelectedItem();
-		transactionService.addMoney(selectedAccount, money);
-		accounts.set(accounts.indexOf(selectedAccount), selectedAccount);
-
-		lblStatus.setText("Added " + money + " to account " + selectedAccount.getAccountNumber());
+		handleMoneyTransaction(true);
 	}
 
 	@FXML
 	public void removeMoneyClicked() {
-		// String moneyStr = txtAddMoney.getText();
-		// if (!InputValidator.checkFloat(moneyStr)) {
-		// 	lblStatus.setText("Invalid money entered!");
-		// 	return;
-		// }
-		// float money = Float.parseFloat(moneyStr);
-		// if (money <= 0) {
-		// 	lblStatus.setText("Money is negative!");
-		// 	return;
-		// }
-		
-		// int account = selectedAccount.getAccountNumber();
-		// if (db.removeMoney(account, money)) {
-		// 	refreshTableafterTransfer(account, -1, money);
-		// 	listAccounts.refresh();
-		// 	Database.log(Integer.toString(user.getUserID()), "removed money from " + account + ": " + money);
-		// } else {
-		// 	lblStatus.setText(NO_TRANSFER);
-		// }
+		handleMoneyTransaction(false);
+	}
 
-		// updateStats();
+	private void handleMoneyTransaction(boolean isAdding) {
+		BigDecimal money = getMoney();
+		if (!isAdding) {
+			money = money.negate();
+		}
+		Account selectedAccount = listAccounts.getSelectionModel().getSelectedItem();
+		transactionService.addMoney(selectedAccount, money);
+		accounts.set(accounts.indexOf(selectedAccount), selectedAccount);
+
+		String action = isAdding ? "Added" : "Removed";
+		String direction = isAdding ? "to" : "from";
+		lblStatus.setText(action + " " + money + " " + direction + " account " + selectedAccount.getAccountNumber());
 	}
 
 	private void setFieldsAndButtons(boolean bool) {
@@ -246,5 +244,14 @@ public class MainFormController implements Initializable {
 
 	public void shutdown() {
 		Platform.exit();
+	}
+
+	private BigDecimal getMoney() {
+		try {
+			return new BigDecimal(txtAddMoney.getText());
+		} catch (NumberFormatException e) {
+			lblStatus.setText("Invalid money amount");
+			return BigDecimal.ZERO;
+		}
 	}
 }

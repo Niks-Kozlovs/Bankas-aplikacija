@@ -25,14 +25,23 @@ public class TransactionService {
 		return newValue;
 	}
 
-    public void sendMoney(Account fromAccount, Account toAccount, BigDecimal amount) {
+    public Account sendMoney(Account fromAccount, int toAccount, BigDecimal amount) {
         if (fromAccount.getBalance().compareTo(amount) < 0) {
             throw new IllegalArgumentException("Insufficient funds");
         }
 
-        fromAccount.setBalance(fromAccount.getBalance().subtract(amount));
-        toAccount.setBalance(toAccount.getBalance().add(amount));
-        //TODO: Add transaction to database
+        Account toAcc = database.getAccount(toAccount);
+
+        if (fromAccount.getOwnerID() == toAcc.getOwnerID()) {
+            fromAccount.setBalance(fromAccount.getBalance().subtract(amount));
+            toAcc.setBalance(toAcc.getBalance().add(amount));
+            database.updateAccounts(fromAccount, toAcc);
+            return toAcc;
+        } else {
+            //Get transfer strategy
+        }
+
+        return null;
     }
 
     public void addMoney(Account account, BigDecimal amount) {

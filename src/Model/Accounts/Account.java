@@ -13,7 +13,7 @@ public class Account {
 
 	public Account(BigDecimal balance, Currency currency, int accountNumber, AccountType accountType, int ownerID) {
 		setBalance(balance);
-		setMoneyType(currency.getCurrencyCode());
+		setCurrencyCode(currency.getCurrencyCode());
 		setAccountNumber(accountNumber);
 		setAccountType(accountType);
 		setOwnerID(ownerID);
@@ -39,11 +39,15 @@ public class Account {
 		this.balance = money.setScale(2, RoundingMode.HALF_EVEN);
 	}
 
-	public String getMoneyType() {
+	public String getCurrencySymbol() {
 		return moneyType.getSymbol();
 	}
 
-	public void setMoneyType(String moneyType) {
+	public String getCurrencyCode() {
+		return moneyType.getCurrencyCode();
+	}
+
+	public void setCurrencyCode(String moneyType) {
 		this.moneyType = Currency.getInstance(moneyType);
 	}
 
