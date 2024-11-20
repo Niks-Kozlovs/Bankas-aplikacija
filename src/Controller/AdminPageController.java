@@ -2,16 +2,22 @@ package Controller;
 
 import java.math.BigDecimal;
 import java.net.URL;
+import java.util.Arrays;
 import java.util.Currency;
+import java.util.List;
 import java.util.ResourceBundle;
 
 import Model.User;
-import Model.Accounts.AccountTemplate;
-import Model.Accounts.Konti;
+import Model.Accounts.Account;
+import Model.Accounts.AccountType;
 import Services.Database;
-import Util.InputValidator;
+import Services.UserService;
+import Util.InputFormatter;
+import at.favre.lib.crypto.bcrypt.BCrypt;
+import javafx.beans.property.SimpleIntegerProperty;
+import javafx.beans.property.SimpleObjectProperty;
+import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.Button;
@@ -19,13 +25,11 @@ import javafx.scene.control.Label;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
-import javafx.scene.control.cell.PropertyValueFactory;
 
 public class AdminPageController implements Initializable {
-	User user;
-	Database db;
-	// Selected user
-	User userContainer = new User();
+	private UserService userService;
+	private Database database;
+	private User currSelectedUser;
 
 	@FXML
 	private TextField txtID;
@@ -38,7 +42,7 @@ public class AdminPageController implements Initializable {
 	@FXML
 	private TextField txtPass;
 	@FXML
-	private TableView<AccountTemplate> tableAccounts = new TableView<>();;
+	private TableView<Account> tableAccounts = new TableView<>();
 
 	@FXML
 	private Button btnAddUser;
@@ -58,226 +62,231 @@ public class AdminPageController implements Initializable {
 	private Button btnAddKreditaKonts;
 
 	@FXML
-	private Label lblStatus = new Label();
+	private Label lblStatus;
 
-	private AccountTemplate acc = null;
+	@Override
+	public void initialize(URL location, ResourceBundle resources) {
+		this.database = Database.getInstance();
+		this.userService = UserService.getInstance();
 
-	// The constructor
-	@SuppressWarnings("unchecked")
-	public void setUp(User user, Database db) {
-		this.db = db;
-		this.user = user;
+		this.txtID.setTextFormatter(InputFormatter.getOnlyDigitsFormatter());
+		this.txtEmail.setTextFormatter(InputFormatter.getEmailFormatter());
+
 		btnDeleteAccount.setDisable(true);
 		disableKontsButtons(true);
 
-		TableColumn<AccountTemplate, Integer> accountNumber = new TableColumn<>("Account number");
-		accountNumber.setMinWidth(100);
-		accountNumber.setCellValueFactory(new PropertyValueFactory<>("accountNumber"));
+		TableColumn<Account, Integer> accountNumber = new TableColumn<Account, Integer>("Account number");
+		accountNumber.setCellValueFactory(cellData -> new SimpleIntegerProperty(cellData.getValue().getAccountNumber()).asObject());
 
-		TableColumn<AccountTemplate, BigDecimal> money = new TableColumn<>("Money");
-		money.setCellValueFactory(new PropertyValueFactory<>("money"));
+		TableColumn<Account, BigDecimal> money = new TableColumn<Account, BigDecimal>("Balance");
+		money.setCellValueFactory(cellData -> new SimpleObjectProperty<>(cellData.getValue().getBalance()));
 
-		TableColumn<AccountTemplate, Currency> moneyType = new TableColumn<>("Currency");
-		moneyType.setCellValueFactory(new PropertyValueFactory<>("moneyType"));
+		TableColumn<Account, String> moneyType = new TableColumn<Account, String>("Currency");
+		moneyType.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getCurrencySymbol()));
 
-		TableColumn<AccountTemplate, String> accountType = new TableColumn<>("Account type");
-		accountType.setCellValueFactory(new PropertyValueFactory<>("accountTypeString"));
+		TableColumn<Account, String> accountType = new TableColumn<Account, String>("Account type");
+		accountType.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getAccountName()));
 
-		tableAccounts.getColumns().addAll(accountNumber, money, moneyType, accountType);
-
+		List<TableColumn<Account, ?>> columns = Arrays.asList(accountNumber, money, moneyType, accountType);
+		tableAccounts.getColumns().addAll(columns);
 	}
 
-	private void populateAccountsList(Konti accounts) {
-		tableAccounts.setItems(null);
-		tableAccounts.setItems(getAccounts(accounts));
-
-	}
-
-	private ObservableList<AccountTemplate> getAccounts(Konti accounts) {
-		ObservableList<AccountTemplate> acc = FXCollections.observableArrayList();
-		for (int i = 0; i < accounts.getAlgasKonti().size(); i++) {
-			acc.add(accounts.getAlgasKonti().get(i));
-		}
-
-		for (int i = 0; i < accounts.getNoguldijumaKonti().size(); i++) {
-			acc.add(accounts.getNoguldijumaKonti().get(i));
-
-		}
-
-		for (int i = 0; i < accounts.getKreditaKonti().size(); i++) {
-			acc.add(accounts.getKreditaKonti().get(i));
-
-		}
-		return acc;
-	}
-
-	// When texts get added to the texftied id it updates it instantly
-	// The only negative thing it would spam request to the database
-	// but since there isnt a lot of admins it wont take that much
-	public void setTextFields() {
-		// if it is invalid then clear the fields
-		if (!InputValidator.checkInteger(txtID.getText()) || txtID.getText().equals("")) {
+	@FXML
+	public void onIdChanged() {
+		if (txtID.getText().isBlank()) {
 			clearFields();
 			disableKontsButtons(true);
 			return;
 		}
 
-		userContainer = db.getUser(Integer.parseInt(txtID.getText()));
-		if (userContainer == null) {
+		try {
+			int userId = Integer.parseInt(txtID.getText());
+			currSelectedUser = database.getUser(userId);
+			setFields();
+		} catch (NumberFormatException e) {
+			clearFields();
+			disableKontsButtons(true);
+			lblStatus.setText("Invalid ID format");
+			return;
+		}
+
+		if (currSelectedUser == null) {
 			clearFields();
 			disableKontsButtons(true);
 			return;
-		} else {
-			disableKontsButtons(false);
 		}
-
-		txtName.setText(userContainer.getName());
-		txtSurname.setText(userContainer.getSurname());
-		txtEmail.setText(userContainer.getEmail());
-		Konti konti = new Konti();
-		konti.addAccounts(db.getAccounts(userContainer.getUserID()));
-		populateAccountsList(konti);
-	}
-	
-	private void disableKontsButtons(boolean status) {
-
-		btnAddAlgasKonts.setDisable(status);
-		btnAddKreditaKonts.setDisable(status);
-		btnAddNoguldijumaKonts.setDisable(status);
 	}
 
+	@FXML
 	public void addUser() {
 		String name = txtName.getText();
 		String surname = txtSurname.getText();
 		String email = txtEmail.getText();
 		String password = txtPass.getText();
 
-		if (!InputValidator.isValidNameSurname(name) || !InputValidator.isValidNameSurname(surname) || !InputValidator.checkEmail(email)) {
-			lblStatus.setText("Please check if all the fields are entered correctly!");
-			return;
-		} else {
-			name = InputValidator.capitalizeFirstLetter(name);
-			surname = InputValidator.capitalizeFirstLetter(surname);
-
-			if (db.addNewUser(name, surname, email, password) != null) {
-				Database.log(Integer.toString(user.getUserID()), "added account");
-				lblStatus.setText("Added user!");
-				clearAll();
-			} else {
-				//Does not clear fields for the admin  to change the wrong answer
-				lblStatus.setText("Email already exists");
-			}
-			
-			
-		}
-	}
-
-	// Password can have anything in it so no checks
-	public void changePassword() {
-		db.changePassword(Integer.parseInt(txtID.getText()), txtPass.getText());
-		lblStatus.setText("Changed password!");
-		Database.log(Integer.toString(user.getUserID()), "changed password for " + txtID.getText());
-	}
-
-	public void modifyUser() {
-		String ID = txtID.getText();
-		String name = txtName.getText();
-		String surname = txtSurname.getText();
-		String email = txtEmail.getText();
-		if (!(InputValidator.checkInteger(ID) || InputValidator.isValidNameSurname(name) || InputValidator.isValidNameSurname(surname) || InputValidator.checkEmail(email))) {
-			lblStatus.setText("Invalid values entered please check fields!");
+		if (name.isBlank() || surname.isBlank() || email.isBlank() || password.isBlank()) {
+			lblStatus.setText("All fields must be filled!");
 			return;
 		}
-		name = InputValidator.capitalizeFirstLetter(name);
-		surname = InputValidator.capitalizeFirstLetter(surname);
-		
-		db.modifyUser(Integer.parseInt(ID), name, surname, email);
-		lblStatus.setText("Modified user!");
-		Database.log(Integer.toString(user.getUserID()), "modified user " + ID);
-	}
 
-	public void deleteUser() {
-		String id = txtID.getText();
-		if (!InputValidator.checkInteger(id)) {
-			lblStatus.setText("Check if id is correct!");
+		userService.createUser(email, name, surname, password);
+
+		if (currSelectedUser == null) {
+			lblStatus.setText("Failed to add user!");
 			return;
 		}
-		db.deleteUser(Integer.parseInt(id));
-		lblStatus.setText("Deleted user!");
-		Database.log(Integer.toString(user.getUserID()), "deleted user " + id);
+
+		addAccount(AccountType.ALGAS_KONTS);
+
+		Database.log(Integer.toString(userService.getCurrentUser().getUserID()), "added new user " + email);
+		lblStatus.setText("Added user!");
 		clearAll();
 	}
 
+	@FXML
+	public void changePassword() {
+		String newPassword = txtPass.getText();
+		if (newPassword == null || newPassword.isBlank()) {
+			lblStatus.setText("Password cannot be empty");
+			return;
+		}
+
+		String hashedPass = BCrypt.withDefaults().hashToString(12, newPassword.toCharArray());
+		currSelectedUser.setHashedPassword(hashedPass);
+
+		database.updateUser(currSelectedUser);
+		lblStatus.setText("Changed password!");
+		Database.log(Integer.toString(userService.getCurrentUser().getUserID()), "changed password for " + txtID.getText());
+	}
+
+	@FXML
+	public void modifyUser() {
+		String idString = txtID.getText();
+		String name = txtName.getText();
+		String surname = txtSurname.getText();
+		String email = txtEmail.getText();
+
+		if (idString.isBlank() || name.isBlank() || surname.isBlank() || email.isBlank()) {
+			lblStatus.setText("All fields must be filled!");
+			return;
+		}
+
+		int id;
+		try {
+			id = Integer.parseInt(idString);
+		} catch (NumberFormatException e) {
+			lblStatus.setText("Invalid ID format!");
+			return;
+		}
+
+		currSelectedUser.setUserID(id);
+		currSelectedUser.setName(name);
+		currSelectedUser.setSurname(surname);
+		currSelectedUser.setEmail(email);
+
+		database.updateUser(currSelectedUser);
+		lblStatus.setText("Modified user!");
+		Database.log(Integer.toString(userService.getCurrentUser().getUserID()), "modified user " + idString);
+	}
+
+	@FXML
+	public void deleteUser() {
+		int id = currSelectedUser.getUserID();
+		database.deleteUser(id);
+		lblStatus.setText("Deleted user!");
+		Database.log(Integer.toString(userService.getCurrentUser().getUserID()), "deleted user " + id);
+		clearAll();
+	}
+
+	@FXML
 	public void addAlgasKonts() {
-		db.addAccount(Integer.parseInt(txtID.getText()), AccountTemplate.ALGAS_KONTS, (float) 0.00, "EUR");
-		updateAccounts();
-		lblStatus.setText("Added algas konts!");
-		Database.log(Integer.toString(user.getUserID()), "added algas konts for " + txtID.getText());
+		addAccount(AccountType.ALGAS_KONTS);
 	}
 
+	@FXML
 	public void addKreditaKonts() {
-		db.addAccount(Integer.parseInt(txtID.getText()), AccountTemplate.KREDITA_KONTS, (float) 0.00, "EUR");
-		updateAccounts();
-		lblStatus.setText("Added kredita konts!");
-		Database.log(Integer.toString(user.getUserID()), "added kredita konts for " + txtID.getText());
+		addAccount(AccountType.KREDITA_KONTS);
 	}
 
+	@FXML
 	public void addNoguldijumaKonts() {
-		db.addAccount(Integer.parseInt(txtID.getText()), AccountTemplate.NOGULDIJUMA_KONTS, (float) 0.00, "EUR");
-		updateAccounts();
-		lblStatus.setText("Added noguldijuma konts!");
-		Database.log(Integer.toString(user.getUserID()), "added noguldijuma konts for " + txtID.getText());
+		addAccount(AccountType.NOGULDIJUMA_KONTS);
 	}
 
-	private void updateAccounts() {
-		Konti konti = new Konti();
-		konti.addAccounts(db.getAccounts(Integer.parseInt(txtID.getText())));
-		populateAccountsList(konti);
+	public void addAccount(AccountType type) {
+
+		if (currSelectedUser == null) {
+			lblStatus.setText("No user selected!");
+			return;
+		}
+
+		try {
+			int userId = currSelectedUser.getUserID();
+			Account acc = new Account(BigDecimal.ZERO, Currency.getInstance("EUR"), 0, type, userId);
+			database.addAccount(acc);
+			Database.log(Integer.toString(userService.getCurrentUser().getUserID()), "added " + type.getName() + " for " + userId);
+			lblStatus.setText("Added " + acc.getAccountType().getName() + "!");
+			setFields();
+		} catch (NumberFormatException e) {
+			lblStatus.setText("Invalid User ID format!");
+		}
 	}
 
-	// Table account selection changed
 	@FXML
 	public void selectionChanged() {
 		int selectedIndex = tableAccounts.getSelectionModel().getSelectedIndex();
-		
+
 		if (selectedIndex != -1) {
 			btnDeleteAccount.setDisable(false);
-			acc = tableAccounts.getItems().get(selectedIndex);
 		} else {
 			btnDeleteAccount.setDisable(true);
 		}
-
 	}
 
+	@FXML
 	public void deleteAccountPressed() {
 		if (tableAccounts.getItems().size() <= 1) {
 			lblStatus.setText("Vajag vismaz vienu kontu");
 			return;
 		}
-		
-		
-		db.removeAccount(acc.getAccountNumber());
-		updateAccounts();
+
+		Account acc = tableAccounts.getSelectionModel().getSelectedItem();
+		database.removeAccount(acc.getAccountNumber());
 		lblStatus.setText("Deleted user account!");
-		Database.log(Integer.toString(user.getUserID()), "removed account " + acc.getAccountNumber());
+		setFields();
 	}
 
-	@Override
-	public void initialize(URL arg0, ResourceBundle arg1) {
+	private void disableKontsButtons(boolean status) {
+		btnAddAlgasKonts.setDisable(status);
+		btnAddKreditaKonts.setDisable(status);
+		btnAddNoguldijumaKonts.setDisable(status);
 	}
 
 	private void clearFields() {
-		tableAccounts.setItems(null);
+		tableAccounts.setItems(FXCollections.observableArrayList());
 		txtName.setText("");
 		txtSurname.setText("");
 		txtEmail.setText("");
 		txtPass.setText("");
 	}
 
-	private void clearAll() {
-		clearFields();
-		txtID.setText("");
+	private void setFields() {
+		if (currSelectedUser == null) {
+			disableKontsButtons(true);
+			return;
+		}
 
+		txtName.setText(currSelectedUser.getName());
+		txtSurname.setText(currSelectedUser.getSurname());
+		txtEmail.setText(currSelectedUser.getEmail());
+		txtPass.setText("");
+		var accounts = database.getAccounts(currSelectedUser.getUserID());
+		tableAccounts.setItems(FXCollections.observableArrayList(accounts));
+		disableKontsButtons(false);
 	}
 
+	private void clearAll() {
+		txtID.setText("");
+		clearFields();
+	}
 }

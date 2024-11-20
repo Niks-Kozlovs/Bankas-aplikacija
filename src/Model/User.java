@@ -5,32 +5,18 @@ public class User {
 	String email = null;
 	String name = null;
 	String surname = null;
+	String hashedPassword = null;
 	boolean isAdmin = false;
 
-	public User() {
-
+	public User(int id, String email, String name, String surname, String hashedPassword, boolean isAdmin) {
+		this.userID = id;
+		this.email = email;
+		this.name = name;
+		this.surname = surname;
+		this.hashedPassword = hashedPassword;
+		this.isAdmin = isAdmin;
 	}
 
-	public User(int userID, String email, String name, String surname, boolean isAdmin) {
-		setAll(userID, email, name, surname, isAdmin);
-	}
-
-	public User(int userID, String email, String name, String surname) {
-		this(userID, email, name, surname, false);
-	}
-
-	public void setAll(int userID,String email, String name, String surname) {
-		setUserID(userID);
-		setEmail(email);
-		setName(name);
-		setSurname(surname);
-	}
-
-	public void setAll(int userID, String email, String name, String surname, boolean isAdmin) {
-		setAll(userID,email,name,surname);
-		setIsAdmin(isAdmin);
-
-	}
 	public int getUserID() {
 		return userID;
 	}
@@ -69,6 +55,14 @@ public class User {
 
 	public boolean getIsAdmin () {
 		return isAdmin;
+	}
+
+	public String getHashedPassword() {
+		return hashedPassword;
+	}
+
+	public void setHashedPassword(String hashedPassword) {
+		this.hashedPassword = hashedPassword;
 	}
 
 }

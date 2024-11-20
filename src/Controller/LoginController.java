@@ -43,13 +43,14 @@ public class LoginController {
 
         try {
             this.userService.login(email, password);
-            lblError.setText(LOGIN_SUCCESS);
-            displayMainPage();
         } catch (AuthenticationException e) {
             handleLoginFailure(e.getMessage());
         } catch (Exception e) {
             handleLoginFailure(e.getMessage());
         }
+
+        lblError.setText(LOGIN_SUCCESS);
+        displayMainPage();
     }
 
     private void handleLoginFailure(String message) {
@@ -63,7 +64,7 @@ public class LoginController {
             FXMLLoader loader = new FXMLLoader();
             loader.setLocation(getClass().getResource("/View/MainPage.fxml"));
             Parent root = loader.load();
-            Stage stage = (Stage) loginButton.getScene().getWindow();
+            Stage stage = (Stage) lblError.getScene().getWindow();
             Scene scene = new Scene(root);
             stage.setScene(scene);
             stage.show();

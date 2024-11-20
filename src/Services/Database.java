@@ -12,12 +12,9 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Currency;
 
-import javax.naming.AuthenticationException;
-
 import Model.User;
 import Model.Accounts.AccountType;
 import Model.Accounts.Account;
-import at.favre.lib.crypto.bcrypt.BCrypt;
 
 public class Database {
 	private static Database instance;
@@ -30,7 +27,6 @@ public class Database {
 
 	private Database() {
 		connect();
-		createUserOnFirstLaunch();
 	}
 
 	public static Database getInstance() {
@@ -54,113 +50,33 @@ public class Database {
 		}
 	}
 
-	private void createUserOnFirstLaunch() {
-		//Check the user count. If it is 0 then add a default user
-		try {
-			java.sql.PreparedStatement stmt = myConn.prepareStatement("SELECT COUNT(*) as count FROM users");
-			ResultSet rs = stmt.executeQuery();
-			rs.next();
-			if (rs.getInt("count") != 0) {
-				return;
-			}
-
-			User user = addNewUser("Admin", "Admin", "admin@admin.com", "admin");
-			java.sql.PreparedStatement stmt2 = myConn.prepareStatement("INSERT INTO `admins`(`UserID`, `AdminPass`) VALUES (?,?);");
-			stmt2.setInt(1, user.getUserID());
-			stmt2.setString(2, BCrypt.withDefaults().hashToString(12, "admin".toCharArray()));
-			stmt2.executeUpdate();
-		} catch (SQLException e) {
-			e.printStackTrace();
-			showError();
-		}
-	}
-
-	public User addNewUser(String name, String surname, String email, String password) {
-		try {
-			String hashedPass = BCrypt.withDefaults().hashToString(12, password.toCharArray());
-			java.sql.PreparedStatement stmt = myConn.prepareStatement(
-					"INSERT INTO `users`(`ID`, `Name`, `Surname`, `Email`, `Password`) VALUES ('0',?,?,?,?);");
-			stmt.setString(1, name);
-			stmt.setString(2, surname);
-			stmt.setString(3, email);
-			stmt.setString(4, hashedPass);
+	public User addUser(User user) {
+		String sql = "INSERT INTO users (Name, Surname, Email, Password) VALUES (?, ?, ?, ?)";
+		try (PreparedStatement stmt = myConn.prepareStatement(sql)) {
+			stmt.setString(1, user.getName());
+			stmt.setString(2, user.getSurname());
+			stmt.setString(3, user.getEmail());
+			stmt.setString(4, user.getHashedPassword());
 			stmt.executeUpdate();
-
-			User user = getUser(name, surname, email);
-			//TODO: MOve to account service
-			// addAccount(user.getUserID(), AccountType.ALGAS_KONTS, (float) 0.00, "EUR");
 
 			return user;
-
 		} catch (SQLException e) {
 			return null;
 		}
 	}
 
-	public void changePassword(int id, String password) {
-		try {
-			java.sql.PreparedStatement stmt = myConn.prepareStatement("UPDATE users SET Password = ? WHERE ID = ?");
-			stmt.setString(1, BCrypt.withDefaults().hashToString(12, password.toCharArray()));
-			stmt.setInt(2, id);
+	public void updateUser(User user) {
+		String sql = "UPDATE users SET Name = ?, Surname = ?, Email = ?, Password = ? WHERE ID = ?";
+		try (PreparedStatement stmt = myConn.prepareStatement(sql)) {
+			stmt.setString(1, user.getName());
+			stmt.setString(2, user.getSurname());
+			stmt.setString(3, user.getEmail());
+			stmt.setString(4, user.getHashedPassword());
+			stmt.setInt(5, user.getUserID());
 			stmt.executeUpdate();
 		} catch (SQLException e) {
 			e.printStackTrace();
 			showError();
-		}
-	}
-
-	public void modifyUser(int id, String name, String surname, String email) {
-		try {
-			java.sql.PreparedStatement stmt = myConn
-					.prepareStatement("UPDATE users SET Name = ?, Surname = ?, Email = ? WHERE ID = ?");
-			stmt.setString(1, name);
-			stmt.setString(2, surname);
-			stmt.setString(3, email);
-			stmt.setInt(4, id);
-			stmt.executeUpdate();
-		} catch (SQLException e) {
-			e.printStackTrace();
-			showError();
-		}
-	}
-
-	public User getUser(int id) {
-		try {
-			java.sql.PreparedStatement stmt = myConn.prepareStatement("Select * from users WHERE ID = ?");
-			stmt.setInt(1, id);
-			ResultSet rs = stmt.executeQuery();
-			if (!rs.next()) {
-				return null;
-			}
-
-			User user = new User(rs.getInt("ID"), rs.getString("email"), rs.getString("name"), rs.getString("surname"));
-			return user;
-		} catch (SQLException e) {
-			e.printStackTrace();
-			showError();
-			return null;
-		}
-	}
-
-	public User getUser(String name, String surname, String email) {
-		try {
-			java.sql.PreparedStatement stmt = myConn
-					.prepareStatement("Select * from users WHERE name  = ? AND surname = ? AND email = ?");
-			stmt.setString(1, name);
-			stmt.setString(2, surname);
-			stmt.setString(3, email);
-			ResultSet rs = stmt.executeQuery();
-			if (rs.next()) {
-				User user = new User(rs.getInt("ID"), rs.getString("email"), rs.getString("name"),
-						rs.getString("surname"));
-				return user;
-			} else {
-				return null;
-			}
-		} catch (SQLException e) {
-			e.printStackTrace();
-			showError();
-			return null;
 		}
 	}
 
@@ -175,77 +91,122 @@ public class Database {
 		}
 	}
 
-	public void deleteUser(String who, String name, String surname, String email) {
-		try {
-			java.sql.PreparedStatement stmt = myConn
-					.prepareStatement("DELETE FROM users WHERE Name = ? AND Surname = ? AND Email = ?");
-			stmt.setString(1, name);
-			stmt.setString(2, surname);
-			stmt.setString(3, email);
-			stmt.executeUpdate();
-			//TODO: Move to admin service
-			log(who, "Deleted user" + name + " " + surname + " " + email);
+	public User getUser(int id) {
+		String sql = "Select * from users WHERE ID = ?";
+		try (PreparedStatement stmt = myConn.prepareStatement(sql)) {
+			stmt.setInt(1, id);
+			try (ResultSet rs = stmt.executeQuery()) {
+				if (!rs.next()) {
+					return null;
+				}
+
+				return new User(
+					rs.getInt("ID"),
+					rs.getString("email"),
+					rs.getString("name"),
+					rs.getString("surname"),
+					rs.getString("password"),
+					false
+				);
+			} catch (SQLException e) {
+				e.printStackTrace();
+				return null;
+			}
 		} catch (SQLException e) {
-			showError();
 			e.printStackTrace();
+			showError();
+			return null;
 		}
 	}
 
-	public User login(String email, String password) throws AuthenticationException {
-		ResultSet rs = null;
-		try {
-			java.sql.PreparedStatement stmt = myConn.prepareStatement("SELECT * FROM `users` WHERE Email = ?");
+	public User getUser(String email) {
+		String sql = "Select * from users WHERE email = ?";
+		try (PreparedStatement stmt = myConn.prepareStatement(sql)) {
 			stmt.setString(1, email);
-			rs = stmt.executeQuery();
+			try (ResultSet rs = stmt.executeQuery()) {
+				if (!rs.next()) {
+					return null;
+				}
 
-			if (!rs.next()) {
-				throw new AuthenticationException("User not found");
-			}
-			//TODO: Move to user service
-			String hashedPass = rs.getString("Password");
-			boolean isPasswordCorrect = BCrypt.verifyer().verify(password.toCharArray(), hashedPass).verified;
-
-			if (!isPasswordCorrect) {
-				throw new AuthenticationException("Wrong password");
-			}
-
-			boolean isAdmin = isAdmin(rs.getInt("ID"));
-			User user = new User(rs.getInt("ID"), rs.getString("Email"), rs.getString("Name"), rs.getString("Surname"), isAdmin);
-
-			if (!user.getIsAdmin()) {
-				log(user.getUserID() + "", "Logged in");
-			} else {
-				log(user.getUserID() + "", "Logged in as admin");
-			}
-
-			return user;
+				return new User(
+					rs.getInt("ID"),
+					rs.getString("email"),
+					rs.getString("name"),
+					rs.getString("surname"),
+					rs.getString("password"),
+					false
+				);
 			} catch (SQLException e) {
-				showError();
 				e.printStackTrace();
+				return null;
 			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+			showError();
 			return null;
 		}
+	}
 
+	public boolean addAdmin(int id, String password) {
+		String sql = "INSERT INTO `admins`(`UserID`, `AdminPass`) VALUES (?, ?)";
+		try (PreparedStatement pstmt = myConn.prepareStatement(sql)) {
+			pstmt.setInt(1, id);
+			pstmt.setString(2, password);
+			pstmt.executeUpdate();
+			return true;
+		} catch (SQLException e) {
+			showError();
+			e.printStackTrace();
+			return false;
+		}
+	}
 
-		private boolean isAdmin(int ID) {
-		ResultSet rs;
-		try {
-			java.sql.PreparedStatement stmt = myConn.prepareStatement("SELECT * FROM admins WHERE UserID = ?");
-			stmt.setInt(1, ID);
-			rs = stmt.executeQuery();
-			// Ja ir tabula ar tadu id
-			if (rs.next()) {
-				return true;
-			} else {
+	public String getAdminPassword(int id) {
+		String sql = "SELECT AdminPass FROM `admins` WHERE UserID = ?";
+		try (PreparedStatement pstmt = myConn.prepareStatement(sql)) {
+			pstmt.setInt(1, id);
+			try (ResultSet rs = pstmt.executeQuery()) {
+				if (!rs.next()) {
+					return null;
+				}
+				return rs.getString("AdminPass");
+			} catch (SQLException e) {
+				e.printStackTrace();
+				return null;
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+			return null;
+		}
+	}
+
+	public boolean getIsAdmin(User user) {
+		String sql = "SELECT * FROM `admins` WHERE UserID = ?";
+		try (PreparedStatement pstmt = myConn.prepareStatement(sql)) {
+			pstmt.setInt(1, user.getUserID());
+			try (ResultSet rs = pstmt.executeQuery()) {
+				return rs.next();
+			} catch (SQLException e) {
+				e.printStackTrace();
 				return false;
 			}
 		} catch (SQLException e) {
-			showError();
 			e.printStackTrace();
+			return false;
 		}
-		return false;
 	}
 
+	public boolean removeAdmin(int id) {
+		String sql = "DELETE FROM `admins` WHERE UserID = ?";
+		try (PreparedStatement pstmt = myConn.prepareStatement(sql)) {
+			pstmt.setInt(1, id);
+			return pstmt.executeUpdate() > 0;
+		} catch (SQLException e) {
+			showError();
+			e.printStackTrace();
+			return false;
+		}
+	}
 
 	public boolean addAccount(Account acc) {
 		String sql = "INSERT INTO `accounts`(`Number`, `Owner`, `Type`, `Value`, `Currency`) VALUES ('0',?,?,?,?)";
@@ -370,35 +331,7 @@ public class Database {
 		}
 	}
 
-	//TODO: Move to user service
-	public boolean loginAdmin(int userID, String password) {
-		ResultSet rs = null;
-		try {
-			java.sql.PreparedStatement stmt = myConn.prepareStatement("SELECT * from admins WHERE UserID = ?");
-			stmt.setInt(1, userID);
-			rs = stmt.executeQuery();
-			String hashedPass;
-			if (rs.next()) {
-				hashedPass = rs.getString("AdminPass");
-				boolean isPasswordCorrect = BCrypt.verifyer().verify(password.toCharArray(), hashedPass).verified;
-				if (isPasswordCorrect) {
-					log(Integer.toString(userID), "logged in as admin");
-					return true;
-				} else {
-					return false;
-				}
-			}
-		} catch (SQLException e) {
-			showError();
-			e.printStackTrace();
-		}
-
-		return false;
-
-	}
-
 	public static void log(String name, String logMessage) {
-
 		try {
 			java.sql.Connection myConnLog = DriverManager.getConnection(URL, USERNAME, PASS);
 			myConnLog.createStatement();

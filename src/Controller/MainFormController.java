@@ -5,6 +5,7 @@ import java.math.BigDecimal;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import java.util.ResourceBundle;
 import java.util.stream.Stream;
 
@@ -13,8 +14,7 @@ import Model.Accounts.Account;
 import Model.Accounts.AccountType;
 import Services.TransactionService;
 import Services.UserService;
-import Util.InputValidator;
-import javafx.application.Platform;
+import Util.InputFormatter;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.SimpleObjectProperty;
@@ -32,6 +32,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
+import javafx.scene.control.TextInputDialog;
 import javafx.stage.Stage;
 
 public class MainFormController implements Initializable {
@@ -109,8 +110,8 @@ public class MainFormController implements Initializable {
 
 		setFieldsAndButtons(true);
 
-		txtTransferNr.setTextFormatter(InputValidator.getOnlyDigitsFormatter());
-		txtAddMoney.setTextFormatter(InputValidator.getOnlyDoubleTextFormatter());
+		txtTransferNr.setTextFormatter(InputFormatter.getOnlyDigitsFormatter());
+		txtAddMoney.setTextFormatter(InputFormatter.getOnlyDoubleTextFormatter());
 	}
 
 	private void populateAccountsList() {
@@ -229,6 +230,25 @@ public class MainFormController implements Initializable {
 
 	@FXML
 	public void openAdminPanel() {
+		TextInputDialog dialog = new TextInputDialog();
+		dialog.setTitle("Admin password");
+		dialog.setHeaderText("Enter admin password");
+		dialog.setContentText("Password: ");
+		Optional<String> result = dialog.showAndWait();
+
+		if (result.isEmpty()) {
+			lblStatus.setText("No password entered");
+			return;
+		}
+
+		String adminPassword = result.get();
+		boolean isAdmin = userService.checkIsAdmin(adminPassword);
+
+		if (!isAdmin) {
+			lblStatus.setText("Invalid admin password");
+			return;
+		}
+
         try {
             FXMLLoader loader = new FXMLLoader();
             loader.setLocation(getClass().getResource("/View/AdminPage.fxml"));
@@ -240,10 +260,6 @@ public class MainFormController implements Initializable {
         } catch (IOException e) {
             e.printStackTrace();
         }
-	}
-
-	public void shutdown() {
-		Platform.exit();
 	}
 
 	private BigDecimal getMoney() {
