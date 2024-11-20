@@ -140,7 +140,7 @@ public class InputValidator {
 		});
     }
 
-	public static TextFormatter<String> getOnlyDoublTextFormatter() {
+	public static TextFormatter<String> getOnlyDoubleTextFormatter() {
 		return new TextFormatter<>(change -> {
 			if (change.getControlNewText().matches("^[0-9]*\\.?[0-9]{0,2}$")) {
 				return change;

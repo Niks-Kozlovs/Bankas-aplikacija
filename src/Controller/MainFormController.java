@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.net.URL;
 import java.util.Arrays;
-import java.util.Currency;
 import java.util.List;
 import java.util.ResourceBundle;
 import java.util.stream.Stream;
@@ -17,6 +16,8 @@ import Services.UserService;
 import Util.InputValidator;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleIntegerProperty;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
@@ -31,7 +32,6 @@ import javafx.scene.control.Label;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
-import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.stage.Stage;
 
 public class MainFormController implements Initializable {
@@ -53,7 +53,7 @@ public class MainFormController implements Initializable {
 	private Label lblStatus;
 
 	@FXML
-	private TableView<Account> listAccounts = new TableView<Account>();
+	private TableView<Account> listAccounts;
 
 	@FXML
 	private ComboBox<String> filterBox;
@@ -110,21 +110,21 @@ public class MainFormController implements Initializable {
 		setFieldsAndButtons(true);
 
 		txtTransferNr.setTextFormatter(InputValidator.getOnlyDigitsFormatter());
-		txtAddMoney.setTextFormatter(InputValidator.getOnlyDoublTextFormatter());
+		txtAddMoney.setTextFormatter(InputValidator.getOnlyDoubleTextFormatter());
 	}
 
 	private void populateAccountsList() {
 		TableColumn<Account, Integer> accountNumber = new TableColumn<Account, Integer>("Account number");
-		accountNumber.setCellValueFactory(new PropertyValueFactory<Account, Integer>("accountNumber"));
+		accountNumber.setCellValueFactory(cellData -> new SimpleIntegerProperty(cellData.getValue().getAccountNumber()).asObject());
 
 		TableColumn<Account, BigDecimal> money = new TableColumn<Account, BigDecimal>("Balance");
-		money.setCellValueFactory(new PropertyValueFactory<Account, BigDecimal>("balance"));
+		money.setCellValueFactory(cellData -> new SimpleObjectProperty<>(cellData.getValue().getBalance()));
 
-		TableColumn<Account, Currency> moneyType = new TableColumn<Account, Currency>("Currency");
-		moneyType.setCellValueFactory(new PropertyValueFactory<Account, Currency>("currencySymbol"));
+		TableColumn<Account, String> moneyType = new TableColumn<Account, String>("Currency");
+		moneyType.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getCurrencySymbol()));
 
 		TableColumn<Account, String> accountType = new TableColumn<Account, String>("Account type");
-		accountType.setCellValueFactory(new PropertyValueFactory<Account, String>("accountName"));
+		accountType.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getAccountName()));
 
 		List<TableColumn<Account, ?>> columns = Arrays.asList(accountNumber, money, moneyType, accountType);
 		listAccounts.getColumns().addAll(columns);
@@ -219,12 +219,12 @@ public class MainFormController implements Initializable {
 		lblStatus.setText(action + " " + money + " " + direction + " account " + selectedAccount.getAccountNumber());
 	}
 
-	private void setFieldsAndButtons(boolean bool) {
-		txtTransferNr.setDisable(bool);
-		txtAddMoney.setDisable(bool);
-		btnTransfer.setDisable(bool);
-		btnAddMoney.setDisable(bool);
-		btnRemoveMoney.setDisable(bool);
+	private void setFieldsAndButtons(boolean isDisabled) {
+		txtTransferNr.setDisable(isDisabled);
+		txtAddMoney.setDisable(isDisabled);
+		btnTransfer.setDisable(isDisabled);
+		btnAddMoney.setDisable(isDisabled);
+		btnRemoveMoney.setDisable(isDisabled);
 	}
 
 	@FXML

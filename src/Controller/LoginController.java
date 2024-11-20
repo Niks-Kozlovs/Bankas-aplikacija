@@ -5,6 +5,8 @@ import java.io.IOException;
 import javax.naming.AuthenticationException;
 
 import Services.UserService;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
@@ -21,15 +23,15 @@ public class LoginController {
     @FXML
     private PasswordField txtFieldPassword;
     @FXML
-    private Button login_button;
+    private Button loginButton;
     @FXML
     private Label lblError;
 
     private static final String LOGIN_SUCCESS = "Login successful";
     private static final String LOGIN_FAILED = "Login failed: ";
-	private static final String LOAD_FAILED = "Failed to load main page.";
-
+    private static final String LOAD_FAILED = "Failed to load main page";
     private UserService userService;
+    private static final Logger LOGGER = Logger.getLogger(LoginController.class.getName());
 
 	public LoginController() {
         this.userService = UserService.getInstance();
@@ -44,11 +46,13 @@ public class LoginController {
             lblError.setText(LOGIN_SUCCESS);
             displayMainPage();
         } catch (AuthenticationException e) {
-            loginFail(e.getMessage());
+            handleLoginFailure(e.getMessage());
+        } catch (Exception e) {
+            handleLoginFailure(e.getMessage());
         }
     }
 
-    private void loginFail(String message) {
+    private void handleLoginFailure(String message) {
         txtFieldEmail.clear();
         txtFieldPassword.clear();
         lblError.setText(LOGIN_FAILED + message);
@@ -59,12 +63,12 @@ public class LoginController {
             FXMLLoader loader = new FXMLLoader();
             loader.setLocation(getClass().getResource("/View/MainPage.fxml"));
             Parent root = loader.load();
-            Stage stage = (Stage) login_button.getScene().getWindow();
+            Stage stage = (Stage) loginButton.getScene().getWindow();
             Scene scene = new Scene(root);
             stage.setScene(scene);
             stage.show();
         } catch (IOException e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Failed to load main page", e);
             lblError.setText(LOAD_FAILED);
         }
     }
