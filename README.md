@@ -127,6 +127,14 @@ https://github.com/user-attachments/assets/1265eed9-2a8c-4a32-9a3c-e6fce3ebd17a
 - **Navigate the Dashboard**: Access various features like account management and transaction processing.
 - **Perform Transactions**: Deposit or withdraw funds, transfer money between accounts.
 
+Kredīta konts - get 5% cashback from any transaction
+
+
+Nogulījuma konts - get 5% bonus from any incoming transaction
+
+
+Algas konts - no bonus
+
 
 https://github.com/user-attachments/assets/805e6d79-19da-4615-8818-70a60f63f513
 
