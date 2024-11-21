@@ -2,9 +2,7 @@ package Controller;
 
 import java.math.BigDecimal;
 import java.net.URL;
-import java.util.Arrays;
 import java.util.Currency;
-import java.util.List;
 import java.util.ResourceBundle;
 
 import Model.User;
