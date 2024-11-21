@@ -7,6 +7,8 @@ import javax.naming.AuthenticationException;
 import Services.UserService;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
@@ -35,11 +37,22 @@ public class LoginController {
 
 	public LoginController() {
         this.userService = UserService.getInstance();
+
+        Platform.runLater(() -> {
+            Stage stage = (Stage) lblError.getScene().getWindow();
+            stage.setTitle("Log in");
+        });
+
     }
 
     public void login() {
         String email = txtFieldEmail.getText();
         String password = txtFieldPassword.getText();
+
+        if (email.isEmpty() || password.isEmpty()) {
+            lblError.setText("Please fill in all fields");
+            return;
+        }
 
         try {
             this.userService.login(email, password);

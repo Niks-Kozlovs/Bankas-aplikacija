@@ -1,3 +1,4 @@
+/* Define Material Design color palette */
 .root {
     -fx-base: #ffffff;
     -fx-accent: #6200ee;
@@ -6,6 +7,7 @@
     -fx-faint-focus-color: transparent;
 }
 
+/* Section labels */
 .section-label {
     font-size: 16px;
     font-weight: bold;
@@ -16,6 +18,13 @@
     -fx-padding: 8 0 4 0;
 }
 
+/* Bold labels */
+.bold-label {
+    font-weight: bold;
+    -fx-font-weight: bold;
+}
+
+/* Input fields */
 .text-field, .combo-box {
     font-size: 14px;
     padding: 8;
@@ -33,17 +42,20 @@
     -fx-padding: 0 8;
 }
 
+/* Labels */
 .label {
     font-size: 14px;
     -fx-font-size: 14px;
     -fx-text-fill: #555;
 }
 
+/* Table view */
 .table-view {
     font-size: 14px;
     -fx-font-size: 14px;
 }
 
+/* VBox and HBox spacing */
 .vbox {
     -fx-spacing: 8;
 }
@@ -52,6 +64,7 @@
     -fx-spacing: 5;
 }
 
+/* Primary button style */
 .primary-button {
     background-color: #6200ee;
     font-size: 14px;
@@ -69,14 +82,17 @@
     -fx-background-color: #3700b3;
 }
 
+/* Buttons */
 .normal-button {
     font-size: 14px;
     padding: 8 16;
     color: #ededed;
+    background-color: #6200ee;
     -fx-font-size: 14px;
     -fx-background-radius: 4;
     -fx-padding: 8 16;
-    -fxckground-color: #ededed;  -fx-text-fill: #000;
+    -fx-background-color: #ededed;
+    -fx-text-fill: #000;
 }
 
 .normal-button:hover {
@@ -84,6 +100,7 @@
     -fx-background-color: #e0e0e0;
 }
 
+/* Shadows for elevation effect */
 .elevated {
     -fx-effect: dropshadow(one-pass-box, rgba(0, 0, 0, 0.1), 4, 0, 0, 2);
 }

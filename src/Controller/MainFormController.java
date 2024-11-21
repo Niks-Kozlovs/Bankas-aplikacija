@@ -88,7 +88,6 @@ public class MainFormController implements Initializable {
 			btnOpenAdmin.setVisible(false);
 		}
 
-		// Set the stage title with the welcome message after the scene is initialized
         Platform.runLater(() -> {
             Stage stage = (Stage) btnTransfer.getScene().getWindow();
             stage.setTitle("Welcome " + user.getName() + "! (" + user.getUserID() + ")");
