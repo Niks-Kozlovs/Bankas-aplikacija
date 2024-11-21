@@ -42,7 +42,15 @@ public class AdminPageController implements Initializable {
 	@FXML
 	private TextField txtPass;
 	@FXML
-	private TableView<Account> tableAccounts = new TableView<>();
+	private TableView<Account> tableAccounts;
+	@FXML
+	private TableColumn<Account, Integer> accountNumberColumn;
+	@FXML
+	private TableColumn<Account, BigDecimal> balanceColumn;
+	@FXML
+	private TableColumn<Account, String> currencyColumn;
+	@FXML
+	private TableColumn<Account, String> accountTypeColumn;
 
 	@FXML
 	private Button btnAddUser;
@@ -75,20 +83,15 @@ public class AdminPageController implements Initializable {
 		btnDeleteAccount.setDisable(true);
 		disableKontsButtons(true);
 
-		TableColumn<Account, Integer> accountNumber = new TableColumn<Account, Integer>("Account number");
-		accountNumber.setCellValueFactory(cellData -> new SimpleIntegerProperty(cellData.getValue().getAccountNumber()).asObject());
+		accountNumberColumn.setCellValueFactory(cellData -> new SimpleIntegerProperty(cellData.getValue().getAccountNumber()).asObject());
+		balanceColumn.setCellValueFactory(cellData -> new SimpleObjectProperty<>(cellData.getValue().getBalance()));
+		currencyColumn.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getCurrencySymbol()));
+		accountTypeColumn.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getAccountName()));
 
-		TableColumn<Account, BigDecimal> money = new TableColumn<Account, BigDecimal>("Balance");
-		money.setCellValueFactory(cellData -> new SimpleObjectProperty<>(cellData.getValue().getBalance()));
-
-		TableColumn<Account, String> moneyType = new TableColumn<Account, String>("Currency");
-		moneyType.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getCurrencySymbol()));
-
-		TableColumn<Account, String> accountType = new TableColumn<Account, String>("Account type");
-		accountType.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getAccountName()));
-
-		List<TableColumn<Account, ?>> columns = Arrays.asList(accountNumber, money, moneyType, accountType);
-		tableAccounts.getColumns().addAll(columns);
+		accountNumberColumn.setPrefWidth(25);
+		balanceColumn.setPrefWidth(25);
+		currencyColumn.setPrefWidth(25);
+		accountTypeColumn.setPrefWidth(25);
 	}
 
 	@FXML

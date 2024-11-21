@@ -4,6 +4,7 @@
 <?import javafx.scene.control.ComboBox?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.Separator?>
+<?import javafx.scene.control.TableColumn?>
 <?import javafx.scene.control.TableView?>
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.layout.AnchorPane?>
@@ -55,7 +56,12 @@
                     </HBox>
                     <!-- Accounts Table -->
                     <TableView fx:id="listAccounts" onMouseClicked="#selectionChanged" prefHeight="400" styleClass="table-view elevated">
+                        <columnResizePolicy><TableView fx:constant="CONSTRAINED_RESIZE_POLICY"/></columnResizePolicy>
                         <columns>
+                            <TableColumn fx:id="accountNumberColumn" text="Account number" />
+                            <TableColumn fx:id="balanceColumn" text="Balance" />
+                            <TableColumn fx:id="currencyColumn" text="Currency" />
+                            <TableColumn fx:id="accountTypeColumn" text="Account type" />
                         </columns>
                     </TableView>
                     <!-- Stats Section -->

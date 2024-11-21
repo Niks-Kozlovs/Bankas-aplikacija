@@ -54,6 +54,14 @@ public class MainFormController implements Initializable {
 
 	@FXML
 	private TableView<Account> listAccounts;
+	@FXML
+	private TableColumn<Account, Integer> accountNumberColumn;
+	@FXML
+	private TableColumn<Account, BigDecimal> balanceColumn;
+	@FXML
+	private TableColumn<Account, String> currencyColumn;
+	@FXML
+	private TableColumn<Account, String> accountTypeColumn;
 
 	@FXML
 	private ComboBox<String> filterBox;
@@ -120,22 +128,17 @@ public class MainFormController implements Initializable {
 	}
 
 	private void populateAccountsList() {
-		TableColumn<Account, Integer> accountNumber = new TableColumn<Account, Integer>("Account number");
-		accountNumber.setCellValueFactory(cellData -> new SimpleIntegerProperty(cellData.getValue().getAccountNumber()).asObject());
+		accountNumberColumn.setCellValueFactory(cellData -> new SimpleIntegerProperty(cellData.getValue().getAccountNumber()).asObject());
+        balanceColumn.setCellValueFactory(cellData -> new SimpleObjectProperty<>(cellData.getValue().getBalance()));
+        currencyColumn.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getCurrencySymbol()));
+        accountTypeColumn.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getAccountName()));
 
-		TableColumn<Account, BigDecimal> money = new TableColumn<Account, BigDecimal>("Balance");
-		money.setCellValueFactory(cellData -> new SimpleObjectProperty<>(cellData.getValue().getBalance()));
+        accountNumberColumn.setPrefWidth(25);
+        balanceColumn.setPrefWidth(25);
+        currencyColumn.setPrefWidth(25);
+        accountTypeColumn.setPrefWidth(25);
 
-		TableColumn<Account, String> moneyType = new TableColumn<Account, String>("Currency");
-		moneyType.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getCurrencySymbol()));
-
-		TableColumn<Account, String> accountType = new TableColumn<Account, String>("Account type");
-		accountType.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getAccountName()));
-
-		List<TableColumn<Account, ?>> columns = Arrays.asList(accountNumber, money, moneyType, accountType);
-		listAccounts.getColumns().addAll(columns);
-
-		listAccounts.setItems(filteredAccounts);
+        listAccounts.setItems(filteredAccounts);
 	}
 
 	@FXML
