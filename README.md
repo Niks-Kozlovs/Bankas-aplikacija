@@ -1,18 +1,19 @@
 <!-- PROJECT LOGO -->
 <br />
 <div align="center">
-    <a href="https://github.com/Niks-Kozlovs/Bankas-aplikacija">
-        <img src="src/res/Logo.png" alt="Logo" width="250">
-    </a>
+  <a href="https://github.com/Niks-Kozlovs/ToDoList">
+    <img src="src/res/Logo.png" alt="Logo" width="250">
+  </a>
 
-    <h3 align="center">Java Banking Application</h3>
+  <h3 align="center">C++ To-Do List</h3>
 
-    <p align="center">
-        A full-featured banking application developed in Java, showcasing advanced programming skills and modern software development principles.
-        <br />
-        <a href="https://github.com/Niks-Kozlovs/Bankas-aplikacija/issues/new">Report Bug</a> ·
-        <a href="https://github.com/Niks-Kozlovs/Bankas-aplikacija/issues/new?labels=enhancement">Request Feature</a>
-    </p>
+  <p align="center">
+    A full-featured banking application developed in Java, showcasing advanced programming skills and modern software development principles.
+    <br />
+    <a href="https://github.com/Niks-Kozlovs/ToDoList/tree/master">View Original Version</a> ·
+    <a href="https://github.com/Niks-Kozlovs/Bankas-aplikacija/issues/new">Report Bug</a> ·
+    <a href="https://github.com/Niks-Kozlovs/Bankas-aplikacija/issues/new?labels=enhancement">Request Feature</a>
+  </p>
 </div>
 
 ---
@@ -42,7 +43,8 @@
 
 ## About The Project
 
-![Product Screenshot][product-screenshot]
+![ProductScreenshot](https://github.com/user-attachments/assets/af0e4877-cdd7-465b-ba45-f8e4b4fc100b)
+
 
 "Bankas-aplikacija" is a comprehensive banking application designed to simulate real-world banking operations. Developed with a focus on clean code and efficient design patterns, this project reflects my growth as a software engineer, highlighting proficiency in Java and related technologies. Of course this is not a real banking application, so the user has the option to add or remove money from the account without any real consequences. Also even though the view and controllers are separate, it is not a client-server application, so any user can access and change data how they want.
 
@@ -117,10 +119,30 @@ To get a local copy up and running, follow these steps.
 
 - **Log In or Register**: Start by creating a new user account or logging in with existing credentials.
 On first launch it generates a default admin account with email `admin@admin.com` and password `admin`.
+
+
+https://github.com/user-attachments/assets/1265eed9-2a8c-4a32-9a3c-e6fce3ebd17a
+
+
 - **Navigate the Dashboard**: Access various features like account management and transaction processing.
 - **Perform Transactions**: Deposit or withdraw funds, transfer money between accounts.
+
+
+https://github.com/user-attachments/assets/805e6d79-19da-4615-8818-70a60f63f513
+
+
 - **Manage Profiles**: Update customer information and manage user settings.
+
+
+https://github.com/user-attachments/assets/bebe50b3-9028-4f24-95d7-ea35424fcd81
+
+
+
+https://github.com/user-attachments/assets/a8fea74b-ae2f-4c70-9328-2003f7838284
+
+
 - **Generate Reports**: View account statements and transaction histories.
+![Log](https://github.com/user-attachments/assets/95836fa4-5094-4a99-a044-662149385712)
 
 ## License
 
@@ -128,6 +150,7 @@ Distributed under the MIT License. See LICENSE.txt for more information.
 
 ## Contact
 
-Niks Kozlovs - @NiksKozlovs - kozlovs.niks1@gmail.com
+Niks Kozlovs - [@NiksKozlovs](https://x.com/NiksKozlovs) - kozlovs.niks1@gmail.com
 
-Project Link: [https://github.com/Niks-Kozlovs/Bankas-aplikacija](https://github.com/Niks-Kozlovs/Bankas-aplikacija)
+[product-screenshot]: Resources/ProjectImage.png
+[CPP]: https://img.shields.io/badge/-C++-blue?logo=cplusplus&style=for-the-badge
