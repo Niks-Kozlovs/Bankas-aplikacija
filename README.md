@@ -142,6 +142,7 @@ https://github.com/user-attachments/assets/a8fea74b-ae2f-4c70-9328-2003f7838284
 
 
 - **Generate Reports**: View account statements and transaction histories.
+
 ![Log](https://github.com/user-attachments/assets/95836fa4-5094-4a99-a044-662149385712)
 
 ## License
