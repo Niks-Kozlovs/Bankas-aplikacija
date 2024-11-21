@@ -92,6 +92,7 @@ public class MainFormController implements Initializable {
         Platform.runLater(() -> {
             Stage stage = (Stage) btnTransfer.getScene().getWindow();
             stage.setTitle("Welcome " + user.getName() + "! (" + user.getUserID() + ")");
+			updateStats();
         });
 
 		selectedAccountNumber.addListener((obs, oldSelection, newSelection) -> {
@@ -147,6 +148,19 @@ public class MainFormController implements Initializable {
 			}
 			return account.getAccountName().equals(selectedType);
 		});
+
+		updateStats();
+	}
+
+	private void updateStats() {
+		BigDecimal totalMoney = filteredAccounts.stream()
+			.map(Account::getBalance)
+			.reduce(BigDecimal.ZERO, BigDecimal::add);
+
+		int accountCount = filteredAccounts.size();
+
+		lblMoney.setText("Sum of money for selected accounts is " + totalMoney);
+		lblCount.setText("There are " + accountCount + " accounts");
 	}
 
 	@FXML
