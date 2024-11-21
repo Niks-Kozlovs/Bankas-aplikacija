@@ -34,6 +34,7 @@ import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
 import javafx.scene.control.TextInputDialog;
+import javafx.scene.image.Image;
 import javafx.stage.Stage;
 
 public class MainFormController implements Initializable {
@@ -99,6 +100,7 @@ public class MainFormController implements Initializable {
         Platform.runLater(() -> {
             Stage stage = (Stage) btnTransfer.getScene().getWindow();
             stage.setTitle("Welcome " + user.getName() + "! (" + user.getUserID() + ")");
+			stage.getIcons().add(new Image(getClass().getResourceAsStream("/res/Logo.jpg")));
 			updateStats();
         });
 

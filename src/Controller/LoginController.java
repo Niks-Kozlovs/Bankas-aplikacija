@@ -17,6 +17,7 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
+import javafx.scene.image.Image;
 import javafx.stage.Stage;
 
 public class LoginController {
@@ -41,6 +42,8 @@ public class LoginController {
         Platform.runLater(() -> {
             Stage stage = (Stage) lblError.getScene().getWindow();
             stage.setTitle("Log in");
+            //Add image to the window
+            stage.getIcons().add(new Image(getClass().getResourceAsStream("/res/Logo.jpg")));
         });
 
     }

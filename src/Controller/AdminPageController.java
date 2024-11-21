@@ -14,6 +14,7 @@ import Services.Database;
 import Services.UserService;
 import Util.InputFormatter;
 import at.favre.lib.crypto.bcrypt.BCrypt;
+import javafx.application.Platform;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
@@ -25,6 +26,8 @@ import javafx.scene.control.Label;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
+import javafx.scene.image.Image;
+import javafx.stage.Stage;
 
 public class AdminPageController implements Initializable {
 	private UserService userService;
@@ -92,6 +95,12 @@ public class AdminPageController implements Initializable {
 		balanceColumn.setPrefWidth(25);
 		currencyColumn.setPrefWidth(25);
 		accountTypeColumn.setPrefWidth(25);
+
+		Platform.runLater(() -> {
+            Stage stage = (Stage) lblStatus.getScene().getWindow();
+            stage.setTitle("Admin page");
+			stage.getIcons().add(new Image(getClass().getResourceAsStream("/res/Logo.jpg")));
+        });
 	}
 
 	@FXML
