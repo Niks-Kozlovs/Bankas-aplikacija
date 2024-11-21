@@ -15,6 +15,7 @@ import Model.Accounts.AccountType;
 import Services.TransactionService;
 import Services.UserService;
 import Util.InputFormatter;
+import javafx.application.Platform;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.SimpleObjectProperty;
@@ -49,8 +50,6 @@ public class MainFormController implements Initializable {
 	@FXML
 	private Label lblCount;
 	@FXML
-	private Label lblAccount;
-	@FXML
 	private Label lblStatus;
 
 	@FXML
@@ -64,6 +63,11 @@ public class MainFormController implements Initializable {
 
 	@FXML
 	private TextField txtAddMoney;
+
+	@FXML
+	private TextField txtTransferAmount;
+	@FXML
+	private TextField txtAddRemoveAmount;
 
 	@FXML
 	private Button btnTransfer;
@@ -84,23 +88,23 @@ public class MainFormController implements Initializable {
 			btnOpenAdmin.setVisible(false);
 		}
 
+		// Set the stage title with the welcome message after the scene is initialized
+        Platform.runLater(() -> {
+            Stage stage = (Stage) btnTransfer.getScene().getWindow();
+            stage.setTitle("Welcome " + user.getName() + "! (" + user.getUserID() + ")");
+        });
 
 		selectedAccountNumber.addListener((obs, oldSelection, newSelection) -> {
 			if (newSelection.equals(-1)) {
 				setFieldsAndButtons(true);
-				lblAccount.setText("Selected account: none");
 				return;
 			}
 
-			int accountNumber = newSelection.intValue();
 			setFieldsAndButtons(false);
-			lblAccount.setText("Selected account: " + accountNumber);
 		});
 
 		populateAccountsList();
 
-		lblAccount.setText("Selected account: none");
-		lblName.setText("Welcome " + user.getName() + "! (" + user.getUserID() + ")");
 		String[] accountNames = Stream.of(AccountType.values())
 			.map(AccountType::getName)
 			.toArray(String[]::new);
@@ -111,7 +115,8 @@ public class MainFormController implements Initializable {
 		setFieldsAndButtons(true);
 
 		txtTransferNr.setTextFormatter(InputFormatter.getOnlyDigitsFormatter());
-		txtAddMoney.setTextFormatter(InputFormatter.getOnlyDoubleTextFormatter());
+		txtTransferAmount.setTextFormatter(InputFormatter.getOnlyDoubleTextFormatter());
+		txtAddRemoveAmount.setTextFormatter(InputFormatter.getOnlyDoubleTextFormatter());
 	}
 
 	private void populateAccountsList() {
@@ -165,9 +170,10 @@ public class MainFormController implements Initializable {
 			return;
 		}
 
-		BigDecimal money = getMoney();
+		BigDecimal money = getTransferMoney();
 
-		if (money.equals(BigDecimal.ZERO)) {
+		if (money.compareTo(BigDecimal.ZERO) <= 0) {
+			lblStatus.setText("Invalid transfer amount");
 			return;
 		}
 
@@ -207,7 +213,11 @@ public class MainFormController implements Initializable {
 	}
 
 	private void handleMoneyTransaction(boolean isAdding) {
-		BigDecimal money = getMoney();
+		BigDecimal money = getAddRemoveMoney();
+		if (money.compareTo(BigDecimal.ZERO) <= 0) {
+			lblStatus.setText("Invalid amount");
+			return;
+		}
 		if (!isAdding) {
 			money = money.negate();
 		}
@@ -222,7 +232,6 @@ public class MainFormController implements Initializable {
 
 	private void setFieldsAndButtons(boolean isDisabled) {
 		txtTransferNr.setDisable(isDisabled);
-		txtAddMoney.setDisable(isDisabled);
 		btnTransfer.setDisable(isDisabled);
 		btnAddMoney.setDisable(isDisabled);
 		btnRemoveMoney.setDisable(isDisabled);
@@ -262,11 +271,20 @@ public class MainFormController implements Initializable {
         }
 	}
 
-	private BigDecimal getMoney() {
+	private BigDecimal getTransferMoney() {
 		try {
-			return new BigDecimal(txtAddMoney.getText());
+			return new BigDecimal(txtTransferAmount.getText());
 		} catch (NumberFormatException e) {
-			lblStatus.setText("Invalid money amount");
+			lblStatus.setText("Invalid transfer amount");
+			return BigDecimal.ZERO;
+		}
+	}
+
+	private BigDecimal getAddRemoveMoney() {
+		try {
+			return new BigDecimal(txtAddRemoveAmount.getText());
+		} catch (NumberFormatException e) {
+			lblStatus.setText("Invalid amount");
 			return BigDecimal.ZERO;
 		}
 	}

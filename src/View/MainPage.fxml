@@ -3,28 +3,69 @@
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.ComboBox?>
 <?import javafx.scene.control.Label?>
+<?import javafx.scene.control.Separator?>
 <?import javafx.scene.control.TableView?>
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
 
-<AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="800.0" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="Controller.MainFormController">
-	<children>
-      <Button fx:id="btnAddMoney" layoutX="245.0" layoutY="112.0" mnemonicParsing="false" onAction="#addMoneyClicked" prefHeight="25.0" prefWidth="85.0" text="Add" />
-		<Label fx:id="lblName" layoutX="14.0" layoutY="14.0" prefHeight="17.0" prefWidth="149.0" />
-		<TableView fx:id="listAccounts" layoutX="290.0" layoutY="10.0" onMouseClicked="#selectionChanged" prefHeight="380.0" prefWidth="450.0" AnchorPane.rightAnchor="10.0" AnchorPane.topAnchor="10.0">
-			<columns>
-			</columns>
-		</TableView>
-		<ComboBox fx:id="filterBox" layoutX="170.0" layoutY="10.0" onAction="#onAccountTypeChanged" prefHeight="25.0" prefWidth="159.0" promptText="Select account types" visibleRowCount="4" />
-      <TextField fx:id="txtTransferNr" layoutX="14.0" layoutY="73.0" prefHeight="25.0" prefWidth="220.0" promptText="Account number to transfer to" />
-      <Button fx:id="btnTransfer" layoutX="245.0" layoutY="73.0" mnemonicParsing="false" onAction="#transferClicked" prefHeight="25.0" prefWidth="85.0" text="Transfer" />
-      <TextField fx:id="txtAddMoney" layoutX="14.0" layoutY="112.0" prefHeight="25.0" prefWidth="220.0" promptText="How much money" />
-      <Label layoutX="13.0" layoutY="185.0" prefHeight="25.0" prefWidth="314.0" text="Stats:" />
-      <Label fx:id="lblMoney" layoutX="13.0" layoutY="210.0" prefHeight="25.0" prefWidth="314.0" text="Sum of money for ? is ? ?" />
-      <Label fx:id="lblCount" layoutX="13.0" layoutY="235.0" prefHeight="25.0" prefWidth="314.0" text="There are count accounts" />
-      <Button fx:id="btnRemoveMoney" layoutX="245.0" layoutY="145.0" mnemonicParsing="false" onAction="#removeMoneyClicked" prefHeight="25.0" prefWidth="85.0" text="Remove" />
-      <Label fx:id="lblAccount" layoutX="14.0" layoutY="48.0" />
-      <Label fx:id="lblStatus" layoutX="13.0" layoutY="330.0" prefHeight="17.0" prefWidth="314.0" />
-      <Button fx:id="btnOpenAdmin" layoutX="14.0" layoutY="357.0" mnemonicParsing="false" onAction="#openAdminPanel" text="Open admin panel" />
-	</children>
+<AnchorPane stylesheets="@application.css" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="Controller.MainFormController">
+    <children>
+        <!-- Main content -->
+        <HBox spacing="5" AnchorPane.bottomAnchor="10" AnchorPane.leftAnchor="10" AnchorPane.rightAnchor="10" AnchorPane.topAnchor="10">
+            <children>
+                <!-- Left side: Transfer Funds and Modify Balance -->
+                <VBox spacing="8" styleClass="vbox">
+                    <!-- Transfer Funds Section -->
+                    <VBox spacing="8" styleClass="vbox elevated">
+                        <Label text="Transfer Funds:" styleClass="section-label" />
+                        <Label text="Recipient Account Number:" styleClass="label" />
+                        <TextField fx:id="txtTransferNr" promptText="Account number" styleClass="text-field" />
+                        <Label text="Amount:" styleClass="label" />
+                        <TextField fx:id="txtTransferAmount" promptText="Transfer amount" styleClass="text-field" />
+                        <Button fx:id="btnTransfer" onAction="#transferClicked" text="Transfer Funds" styleClass="primary-button" />
+                    </VBox>
+                    <Separator />
+                    <!-- Modify Balance Section -->
+                    <VBox spacing="8" styleClass="vbox elevated">
+                        <Label text="Modify Balance:" styleClass="section-label" />
+                        <Label text="Amount:" styleClass="label" />
+                        <TextField fx:id="txtAddRemoveAmount" promptText="Amount" styleClass="text-field" />
+                        <HBox spacing="5" styleClass="hbox">
+                            <children>
+                                <Button fx:id="btnAddMoney" onAction="#addMoneyClicked" text="Add Money" styleClass="normal-button" />
+                                <Button fx:id="btnRemoveMoney" onAction="#removeMoneyClicked" text="Remove Money" styleClass="normal-button" />
+                            </children>
+                        </HBox>
+                    </VBox>
+                    <Separator />
+                    <!-- Admin Button and Status Label -->
+                    <Button fx:id="btnOpenAdmin" onAction="#openAdminPanel" text="Open Admin Panel" styleClass="normal-button" />
+                    <Label fx:id="lblStatus" styleClass="label" />
+                </VBox>
+                <!-- Right side: Filter Accounts and Table -->
+                <VBox prefWidth="450" spacing="8" styleClass="vbox">
+                    <!-- Filter Accounts and Selected Account Info -->
+                    <HBox alignment="CENTER_LEFT" spacing="5" styleClass="hbox">
+                        <children>
+                            <Label text="Filter Accounts:" styleClass="label" />
+                            <ComboBox fx:id="filterBox" onAction="#onAccountTypeChanged" promptText="Select account type" visibleRowCount="4" styleClass="combo-box" />
+                        </children>
+                    </HBox>
+                    <!-- Accounts Table -->
+                    <TableView fx:id="listAccounts" onMouseClicked="#selectionChanged" prefHeight="400" styleClass="table-view elevated">
+                        <columns>
+                        </columns>
+                    </TableView>
+                    <!-- Stats Section -->
+                    <VBox styleClass="vbox">
+                        <Label text="Stats:" styleClass="section-label" />
+                        <Label fx:id="lblMoney" text="Sum of money for ? is ? ?" styleClass="label" />
+                        <Label fx:id="lblCount" text="There are count accounts" styleClass="label" />
+                    </VBox>
+                </VBox>
+            </children>
+        </HBox>
+    </children>
 </AnchorPane>
