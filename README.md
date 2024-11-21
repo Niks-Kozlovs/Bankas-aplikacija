@@ -1,16 +1,16 @@
 <!-- PROJECT LOGO -->
 <br />
 <div align="center">
-  <a href="https://github.com/Niks-Kozlovs/ToDoList">
+  <a href="https://github.com/Niks-Kozlovs/Bankas-aplikacija">
     <img src="src/res/Logo.png" alt="Logo" width="250">
   </a>
 
-  <h3 align="center">C++ To-Do List</h3>
+  <h3 align="center">Java Banking Application</h3>
 
   <p align="center">
     A full-featured banking application developed in Java, showcasing advanced programming skills and modern software development principles.
     <br />
-    <a href="https://github.com/Niks-Kozlovs/ToDoList/tree/master">View Original Version</a> ·
+    <a href="https://github.com/Niks-Kozlovs/Bankas-aplikacija/tree/master">View Original Version</a> ·
     <a href="https://github.com/Niks-Kozlovs/Bankas-aplikacija/issues/new">Report Bug</a> ·
     <a href="https://github.com/Niks-Kozlovs/Bankas-aplikacija/issues/new?labels=enhancement">Request Feature</a>
   </p>
@@ -160,6 +160,3 @@ Distributed under the MIT License. See LICENSE.txt for more information.
 ## Contact
 
 Niks Kozlovs - [@NiksKozlovs](https://x.com/NiksKozlovs) - kozlovs.niks1@gmail.com
-
-[product-screenshot]: Resources/ProjectImage.png
-[CPP]: https://img.shields.io/badge/-C++-blue?logo=cplusplus&style=for-the-badge
